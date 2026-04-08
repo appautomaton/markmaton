@@ -7,7 +7,7 @@ name = "markmaton"
 version = "0.1.0"
 description = "Lightweight HTML-to-Markdown tooling for agent workflows."
 readme = "README.md"
-requires-python = ">=3.11"
+requires-python = ">=3.9"
 license = { text = "MIT" }
 authors = [
   { name = "appautomaton" }
@@ -27,3 +27,5 @@ Homepage = "https://github.com/appautomaton/markmaton"
 Repository = "https://github.com/appautomaton/markmaton"
 Issues = "https://github.com/appautomaton/markmaton/issues"
 
+[project.scripts]
+markmaton = "markmaton.cli:main"
