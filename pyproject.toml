@@ -1,0 +1,29 @@
+[build-system]
+requires = ["hatchling>=1.27.0"]
+build-backend = "hatchling.build"
+
+[project]
+name = "markmaton"
+version = "0.1.0"
+description = "Lightweight HTML-to-Markdown tooling for agent workflows."
+readme = "README.md"
+requires-python = ">=3.11"
+license = { text = "MIT" }
+authors = [
+  { name = "appautomaton" }
+]
+classifiers = [
+  "Development Status :: 2 - Pre-Alpha",
+  "Intended Audience :: Developers",
+  "License :: OSI Approved :: MIT License",
+  "Programming Language :: Python :: 3",
+  "Programming Language :: Python :: 3.11",
+  "Programming Language :: Python :: 3.12",
+  "Topic :: Software Development :: Libraries",
+]
+
+[project.urls]
+Homepage = "https://github.com/appautomaton/markmaton"
+Repository = "https://github.com/appautomaton/markmaton"
+Issues = "https://github.com/appautomaton/markmaton/issues"
+

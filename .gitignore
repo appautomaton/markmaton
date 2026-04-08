@@ -1,0 +1,28 @@
+# macOS
+.DS_Store
+
+# Python
+__pycache__/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.venv/
+venv/
+build/
+dist/
+*.egg-info/
+
+# Coverage
+.coverage
+coverage.xml
+htmlcov/
+
+# Go
+bin/
+*.test
+coverage.out
+
+# Editors
+.idea/
+.vscode/
+
