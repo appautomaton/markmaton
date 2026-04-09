@@ -86,6 +86,16 @@ The wheel contract is:
 - platform-specific
 - same Python CLI entrypoint on every platform
 
+The current release workflow builds wheels natively on each GitHub runner.
+
+It does **not** use `cibuildwheel` in the first release track.
+
+That is intentional:
+
+- `markmaton` bundles an external Go binary
+- the first release path favors explicit runner-native control over a more abstract wheel orchestration layer
+- this keeps the workflow easier to debug while the packaging contract settles
+
 ## Local pre-publish checks
 
 Before a real publish, do all of these locally:

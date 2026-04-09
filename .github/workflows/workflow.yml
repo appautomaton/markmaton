@@ -19,6 +19,9 @@ on:
 permissions:
   contents: read
 
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
 jobs:
   build-sdist:
     runs-on: ubuntu-latest
@@ -52,12 +55,18 @@ jobs:
         include:
           - os: ubuntu-latest
             binary_name: markmaton-engine
+            wheel_tag: py3-none-linux_x86_64
           - os: macos-13
             binary_name: markmaton-engine
+            wheel_tag: py3-none-macosx_12_0_x86_64
+            macos_deployment_target: "12.0"
           - os: macos-14
             binary_name: markmaton-engine
+            wheel_tag: py3-none-macosx_12_0_arm64
+            macos_deployment_target: "12.0"
           - os: windows-latest
             binary_name: markmaton-engine.exe
+            wheel_tag: py3-none-win_amd64
     steps:
       - uses: actions/checkout@v4
 
@@ -72,28 +81,40 @@ jobs:
           go-version-file: go.mod
 
       - name: Install build dependencies
-        run: python3 -m pip install --upgrade pip build hatchling packaging cibuildwheel
+        run: python3 -m pip install --upgrade pip build hatchling packaging
 
       - name: Build platform engine binary
         shell: bash
+        env:
+          CGO_ENABLED: "0"
+          MACOSX_DEPLOYMENT_TARGET: ${{ matrix.macos_deployment_target }}
         run: |
           mkdir -p .wheel-bin
           if [ "${{ runner.os }}" = "Windows" ]; then
-            export CGO_ENABLED=0
             go build -o ".wheel-bin/${{ matrix.binary_name }}" ./cmd/markmaton-engine
           else
-            CGO_ENABLED=0 go build -o ".wheel-bin/${{ matrix.binary_name }}" ./cmd/markmaton-engine
+            go build -o ".wheel-bin/${{ matrix.binary_name }}" ./cmd/markmaton-engine
             chmod +x ".wheel-bin/${{ matrix.binary_name }}"
           fi
 
       - name: Build wheel
         env:
           MARKMATON_ENGINE: ${{ github.workspace }}/.wheel-bin/${{ matrix.binary_name }}
-          CIBW_BUILD: cp312-*
-          CIBW_SKIP: pp* *-musllinux_* *-win32
-          CIBW_BUILD_VERBOSITY: "1"
-          CIBW_TEST_COMMAND: python {project}/tests/smoke/installed_cli_smoke.py
-        run: python3 -m cibuildwheel --output-dir dist
+          MARKMATON_WHEEL_TAG: ${{ matrix.wheel_tag }}
+          MACOSX_DEPLOYMENT_TARGET: ${{ matrix.macos_deployment_target }}
+        run: python3 -m build --wheel --no-isolation
+
+      - name: Smoke installed wheel
+        shell: bash
+        run: |
+          python3 -m venv .wheel-smoke
+          if [ "${{ runner.os }}" = "Windows" ]; then
+            ./.wheel-smoke/Scripts/pip install dist/*.whl
+            ./.wheel-smoke/Scripts/python tests/smoke/installed_cli_smoke.py
+          else
+            ./.wheel-smoke/bin/pip install dist/*.whl
+            ./.wheel-smoke/bin/python tests/smoke/installed_cli_smoke.py
+          fi
 
       - name: Upload wheel artifacts
         uses: actions/upload-artifact@v4

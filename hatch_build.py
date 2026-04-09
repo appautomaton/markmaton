@@ -32,6 +32,8 @@ def packaged_binary_path(root: Path = PROJECT_ROOT, system: Optional[str] = None
 
 
 def platform_wheel_tag() -> str:
+    if explicit := os.environ.get("MARKMATON_WHEEL_TAG"):
+        return explicit
     for tag in sys_tags():
         if tag.platform != "any":
             return f"py3-none-{tag.platform}"
