@@ -47,6 +47,7 @@ upstream capture tool
 
 Typical upstream tools:
 
+- the companion `browser-html-capture` skill
 - Playwright
 - fetch / requests / httpx
 - Firecrawl

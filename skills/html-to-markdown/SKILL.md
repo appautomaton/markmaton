@@ -15,13 +15,16 @@ Use this skill when:
 Do not use this skill to visit URLs directly.
 Get HTML first, then pass it into `markmaton`.
 
+If you do not have HTML yet and the page needs a real browser,
+use the companion `browser-html-capture` skill first.
+
 Use the bundled PEP 723 script as the default execution path:
 
 - `scripts/markmaton_convert.py`
 
 Run it with:
 
-- `uv run --script skills/html-to-markdown/scripts/markmaton_convert.py ...`
+- `uv run --script scripts/markmaton_convert.py ...`
 
 This keeps the skill self-contained and isolates dependencies from the caller's runtime.
 
