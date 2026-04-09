@@ -18,8 +18,8 @@ class HatchBuildTestCase(unittest.TestCase):
         self.assertNotEqual(tag, "py3-none-any")
 
     def test_platform_wheel_tag_uses_environment_override(self) -> None:
-        with mock.patch.dict(os.environ, {"MARKMATON_WHEEL_TAG": "py3-none-linux_x86_64"}):
-            self.assertEqual(hatch_build.platform_wheel_tag(), "py3-none-linux_x86_64")
+        with mock.patch.dict(os.environ, {"MARKMATON_WHEEL_TAG": "py3-none-manylinux2014_x86_64"}):
+            self.assertEqual(hatch_build.platform_wheel_tag(), "py3-none-manylinux2014_x86_64")
 
     def test_resolve_engine_source_prefers_explicit_path(self) -> None:
         with tempfile.TemporaryDirectory() as tmpdir:

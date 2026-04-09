@@ -86,14 +86,16 @@ The wheel contract is:
 - platform-specific
 - same Python CLI entrypoint on every platform
 
-The current release workflow builds wheels natively on each GitHub runner.
+The current release workflow builds wheels on each GitHub runner, with one Linux-specific rule:
 
-It does **not** use `cibuildwheel` in the first release track.
+- Linux wheels are tagged `manylinux2014_x86_64`
+- the bundled Go engine is built with `CGO_ENABLED=0`
+- the release workflow rejects tag pushes whose `v*` version does not match `pyproject.toml`
 
 That is intentional:
 
 - `markmaton` bundles an external Go binary
-- the first release path favors explicit runner-native control over a more abstract wheel orchestration layer
+- the first release path favors explicit runner control over a more abstract wheel orchestration layer
 - this keeps the workflow easier to debug while the packaging contract settles
 
 ## Local pre-publish checks

@@ -64,7 +64,7 @@ The wheel strategy is explicitly:
 
 The initial target matrix for release-readiness is:
 
-- Linux x86_64
+- Linux x86_64 via `manylinux2014_x86_64`
 - macOS x86_64
 - macOS arm64
 - Windows x86_64
