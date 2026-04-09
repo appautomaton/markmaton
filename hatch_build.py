@@ -5,10 +5,9 @@ import platform
 import shutil
 import stat
 import subprocess
+import sysconfig
 from pathlib import Path
 from typing import Optional
-
-from packaging.tags import sys_tags
 
 try:
     from hatchling.builders.hooks.plugin.interface import BuildHookInterface
@@ -34,6 +33,15 @@ def packaged_binary_path(root: Path = PROJECT_ROOT, system: Optional[str] = None
 def platform_wheel_tag() -> str:
     if explicit := os.environ.get("MARKMATON_WHEEL_TAG"):
         return explicit
+
+    try:
+        from packaging.tags import sys_tags
+    except ImportError:
+        platform_tag = sysconfig.get_platform().replace("-", "_").replace(".", "_")
+        if platform_tag == "any":
+            raise RuntimeError("Could not determine a platform-specific wheel tag for this build.")
+        return f"py3-none-{platform_tag}"
+
     for tag in sys_tags():
         if tag.platform != "any":
             return f"py3-none-{tag.platform}"
