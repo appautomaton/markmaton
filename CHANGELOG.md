@@ -2,6 +2,22 @@
 
 All notable changes to `markmaton` will be documented in this file.
 
+## [0.1.5] - 2026-04-09
+
+### Added
+
+- `uv`-managed local development with a committed `uv.lock`
+- Python version pinning via `.python-version`
+- documentation index and usage guide for installed and local workflows
+- GitHub release-note defaults in `.github/release.yml`
+
+### Changed
+
+- local development is now `uv`-first and pinned to Python `3.12`
+- CI now uses `uv sync --group dev --locked` for Python-side validation
+- README and docs now present install, usage, smoke, benchmark, and release paths more clearly
+- workflow actions were updated to current major versions to reduce old runtime warnings
+
 ## [0.1.4] - 2026-04-09
 
 ### Added
