@@ -6,17 +6,24 @@ __pycache__/
 .pytest_cache/
 .mypy_cache/
 .ruff_cache/
+.tox/
+.nox/
 .venv/
 venv/
 build/
 dist/
 *.egg-info/
 .hatch-build/
+pip-wheel-metadata/
 
 # Coverage
 .coverage
+.coverage.*
 coverage.xml
 htmlcov/
+
+# uv
+# Keep uv.lock and .python-version tracked.
 
 # Go
 bin/

@@ -9,30 +9,30 @@ on:
 permissions:
   contents: read
 
-env:
-  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
-
 jobs:
   test:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
+
+      - name: Set up uv
+        uses: astral-sh/setup-uv@v6
+        with:
+          python-version-file: .python-version
 
       - name: Set up Go
-        uses: actions/setup-go@v5
+        uses: actions/setup-go@v6
         with:
           go-version-file: go.mod
 
-      - name: Set up Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: "3.12"
+      - name: Sync uv environment
+        run: uv sync --group dev --locked
 
       - name: Run Go tests
         run: go test ./...
 
       - name: Run Python unit tests
-        run: python3 -m unittest discover -s tests -p 'test_*.py'
+        run: uv run python -m unittest discover -s tests -p 'test_*.py'
 
       - name: Build local engine binary
         run: |
@@ -43,7 +43,7 @@ jobs:
         env:
           MARKMATON_ENGINE: ${{ github.workspace }}/bin/markmaton-engine
         run: |
-          python3 -m markmaton.cli convert \
+          uv run python -m markmaton.cli convert \
             --html-file testdata/fixtures/core/article.html \
             --url https://example.com/articles/harnessing-parsers \
             --output-format markdown > /tmp/markmaton-smoke.md

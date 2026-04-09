@@ -1,51 +1,145 @@
 # markmaton
 
-Lightweight HTML-to-Markdown tooling for agent workflows.
+[![CI](https://github.com/appautomaton/markmaton/actions/workflows/ci.yml/badge.svg)](https://github.com/appautomaton/markmaton/actions/workflows/ci.yml)
+[![Release](https://github.com/appautomaton/markmaton/actions/workflows/workflow.yml/badge.svg)](https://github.com/appautomaton/markmaton/actions/workflows/workflow.yml)
+[![PyPI version](https://img.shields.io/pypi/v/markmaton)](https://pypi.org/project/markmaton/)
+[![Python versions](https://img.shields.io/pypi/pyversions/markmaton)](https://pypi.org/project/markmaton/)
 
-## Status
+`markmaton` is a lightweight HTML-to-Markdown parser for agent workflows.
+It takes already-fetched page HTML, cleans the structure, and returns Markdown plus page metadata.
 
-This repository is intentionally starting small.
+> [!NOTE]
+> `markmaton` is a general parser, not a crawler.
+> Feed it HTML from Playwright, `fetch`, Firecrawl, or another upstream page-visit tool.
 
-The current goal is to build a clean, fast parser core that can:
+## Why it exists
 
-- take normalized page HTML from tools like Playwright, `fetch`, or no-driver
-- clean the page structure
-- return robust Markdown and page metadata
+- Keep the parser core narrow and deterministic.
+- Accept both fetched HTML and rendered HTML.
+- Make HTML-to-Markdown robust enough for real agent workflows.
+- Ship a simple Python CLI around a Go engine.
 
-## Direction
+## Install
 
-- parser core: Go
-- distribution: Python packaging / PyPI
-- first focus: library and CLI for local agent use
-- release track: GitHub Actions + Trusted Publishing
+### `pip`
 
-## Current shape
+```bash
+pip install markmaton
+```
+
+### `uv tool`
+
+```bash
+uv tool install markmaton
+```
+
+> [!TIP]
+> `markmaton` itself now develops as a `uv`-managed Python 3.12 project.
+> The installed package still works through plain `pip`, but local development assumes `uv`.
+
+## Quickstart
+
+### CLI
+
+```bash
+markmaton convert \
+  --html-file page.html \
+  --url https://example.com/article \
+  --output-format markdown
+```
+
+To get the full structured response:
+
+```bash
+markmaton convert \
+  --html-file page.html \
+  --url https://example.com/article \
+  --output-format json
+```
+
+### Python API
+
+```python
+from markmaton import ConvertOptions, ConvertRequest, convert_html
+
+html = "<article><h1>Hello</h1><p>World</p></article>"
+
+response = convert_html(
+    ConvertRequest(
+        html=html,
+        url="https://example.com/article",
+        options=ConvertOptions(only_main_content=True),
+    )
+)
+
+print(response.markdown)
+print(response.metadata.title)
+```
+
+> [!TIP]
+> Pass `url` whenever you can.
+> `markmaton` uses it as parsing context for canonical metadata and absolute link resolution.
+
+## What you get back
+
+The JSON response includes:
+
+- `markdown`
+- `html_clean`
+- `metadata`
+- `links`
+- `images`
+- `quality`
+
+This keeps the parser useful both as a Markdown generator and as a page-normalization step in a larger workflow.
+
+## Project shape
 
 - Go engine: `cmd/markmaton-engine`
-- Python wrapper: `markmaton/`
-- Architecture docs: `docs/`
-- Plans and issue CSVs: `plan/` and `issues/`
+- Python wrapper and CLI: `markmaton/`
+- Parser fixtures and golden files: `testdata/`
+- Research, benchmark, and release docs: `docs/`
 
-## Testing policy
+## Documentation
 
-- automated tests should be unit-test-first
-- parser module tests should use local fixtures and golden files
-- Python wrapper tests should mock the engine boundary
-- real engine checks stay manual unless there is a strong reason to automate them
+Start here:
 
-## Testing layout
+- [Documentation index](docs/README.md)
+- [Usage guide](docs/usage.md)
+- [Packaging layout](docs/packaging-layout.md)
+- [PyPI release path](docs/pypi-release.md)
+- [Benchmark workflow](docs/benchmark-workflow.md)
+- [Benchmark matrix](docs/benchmark-matrix.md)
 
-- Go package unit tests live beside each package under `internal/*`.
-- Shared Go fixture/golden helpers live in `internal/testutil/`.
-- Stable parser fixtures live under `testdata/fixtures/core/`.
-- Real-world regression fixtures live under `testdata/fixtures/regression/`.
-- Golden markdown outputs for stable core fixtures live under `testdata/golden/core/`.
-- Python wrapper tests live under `tests/unit/`.
+## Development
 
-## Local smoke
+Set up the local development environment:
 
-See:
+```bash
+uv sync --group dev
+```
 
-- `docs/local-smoke.md`
-- `docs/packaging-layout.md`
-- `docs/pypi-release.md`
+Run the core test suites:
+
+```bash
+uv run python -m unittest discover -s tests -p 'test_*.py'
+go test ./...
+```
+
+For a manual end-to-end smoke:
+
+- [Local smoke flow](docs/local-smoke.md)
+
+The repo is pinned to:
+
+- Python `3.12` via [`.python-version`](.python-version)
+- a committed `uv.lock`
+
+> [!IMPORTANT]
+> Automated coverage stays unit-test-first.
+> Live page visits and benchmark sampling are intentionally kept out of the default automated test path.
+
+## Release notes
+
+- [Changelog](CHANGELOG.md)
+- [GitHub Releases](https://github.com/appautomaton/markmaton/releases)

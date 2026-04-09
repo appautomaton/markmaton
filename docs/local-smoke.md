@@ -8,6 +8,19 @@ It is intentionally manual.
 
 Automated coverage for `markmaton` should stay unit-test-first.
 
+## Local development environment
+
+`markmaton` now treats local Python development as:
+
+- `uv`-managed
+- pinned to Python `3.12`
+
+Recommended setup from the repo root:
+
+```bash
+uv sync --group dev
+```
+
 ## Build the engine
 
 From the repo root:
@@ -26,13 +39,13 @@ go test ./...
 ## Run the Python unit tests
 
 ```bash
-python3 -m unittest discover -s tests -p 'test_*.py'
+uv run python -m unittest discover -s tests -p 'test_*.py'
 ```
 
 ## Smoke the real engine with a fixture
 
 ```bash
-python3 - <<'EOF'
+uv run python - <<'EOF'
 import json
 import pathlib
 import subprocess
@@ -59,7 +72,7 @@ The easier real check is through the Python CLI:
 
 ```bash
 MARKMATON_ENGINE=./bin/markmaton-engine \
-python3 -m markmaton.cli convert \
+uv run python -m markmaton.cli convert \
   --html-file testdata/fixtures/core/article.html \
   --url https://example.com/articles/harnessing-parsers \
   --output-format markdown
@@ -89,7 +102,7 @@ Do not make this the default automated test path.
 For release-readiness work, also verify the installed-wheel path:
 
 ```bash
-python3 -m build --sdist --wheel
+uv run python -m build --sdist --wheel --no-isolation
 python3 -m venv /tmp/markmaton-wheel-smoke
 /tmp/markmaton-wheel-smoke/bin/pip install dist/*.whl
 /tmp/markmaton-wheel-smoke/bin/python tests/smoke/installed_cli_smoke.py

@@ -124,7 +124,7 @@ Use cached HTML, not the live page.
 Example:
 
 ```bash
-python3 -m markmaton.cli convert \
+uv run python -m markmaton.cli convert \
   --html-file tmp/benchmarks/<slug>/rendered.html \
   --url https://example.com \
   --output-format json

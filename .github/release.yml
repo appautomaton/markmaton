@@ -1,0 +1,25 @@
+changelog:
+  exclude:
+    labels:
+      - skip-changelog
+  categories:
+    - title: Parser core
+      labels:
+        - parser
+        - cleanhtml
+        - convert
+        - postprocess
+        - quality
+    - title: Packaging and release
+      labels:
+        - packaging
+        - release
+        - ci
+    - title: Documentation and benchmarks
+      labels:
+        - docs
+        - benchmark
+        - tests
+    - title: Other changes
+      labels:
+        - "*"

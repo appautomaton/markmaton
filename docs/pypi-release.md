@@ -26,6 +26,10 @@ It answers:
   - uploads artifacts
   - publishes only through explicit release paths
 
+GitHub release-note defaults live in:
+
+- `.github/release.yml`
+
 Do not rename `workflow.yml` casually.
 
 PyPI Trusted Publishing binds to the exact workflow file path.
@@ -102,11 +106,12 @@ That is intentional:
 
 Before a real publish, do all of these locally:
 
-1. `python3 -m build --sdist --wheel`
-2. Inspect wheel contents and confirm `markmaton/bin/markmaton-engine*`
-3. Install the wheel in a clean venv
-4. Run `markmaton convert ...` and confirm the CLI finds the bundled binary
-5. Run Go and Python test suites
+1. `uv sync --group dev`
+2. `uv run python -m build --sdist --wheel --no-isolation`
+3. Inspect wheel contents and confirm `markmaton/bin/markmaton-engine*`
+4. Install the wheel in a clean venv
+5. Run `markmaton convert ...` and confirm the CLI finds the bundled binary
+6. Run Go and Python test suites
 
 ## Current support matrix
 
