@@ -37,7 +37,7 @@ import json
 import pathlib
 import subprocess
 
-html = pathlib.Path("testdata/fixtures/article.html").read_text()
+html = pathlib.Path("testdata/fixtures/core/article.html").read_text()
 payload = {
     "url": "https://example.com/articles/harnessing-parsers",
     "html": html,
@@ -60,7 +60,7 @@ The easier real check is through the Python CLI:
 ```bash
 MARKMATON_ENGINE=./bin/markmaton-engine \
 python3 -m markmaton.cli convert \
-  --html-file testdata/fixtures/article.html \
+  --html-file testdata/fixtures/core/article.html \
   --url https://example.com/articles/harnessing-parsers \
   --output-format markdown
 ```
@@ -83,3 +83,16 @@ Use the smoke flow when:
 - the CLI or engine contract changes
 
 Do not make this the default automated test path.
+
+## Local wheel smoke
+
+For release-readiness work, also verify the installed-wheel path:
+
+```bash
+python3 -m build --sdist --wheel
+python3 -m venv /tmp/markmaton-wheel-smoke
+/tmp/markmaton-wheel-smoke/bin/pip install dist/*.whl
+/tmp/markmaton-wheel-smoke/bin/python tests/smoke/installed_cli_smoke.py
+```
+
+This validates the packaged CLI rather than the repo-local development path.

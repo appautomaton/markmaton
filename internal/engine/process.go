@@ -70,7 +70,7 @@ func runPipeline(request model.Request, meta model.Metadata, onlyMainContent boo
 		return model.Response{}, err
 	}
 
-	meta = normalizeMetadata(meta, extractedLinks)
+	meta = normalizeMetadata(request, meta)
 	qualityResult := quality.Analyze(markdown, meta.Title, len(extractedLinks), len(extractedImages), onlyMainContent, fallbackUsed)
 
 	return model.Response{
@@ -83,9 +83,9 @@ func runPipeline(request model.Request, meta model.Metadata, onlyMainContent boo
 	}, nil
 }
 
-func normalizeMetadata(meta model.Metadata, links []string) model.Metadata {
-	if meta.CanonicalURL == "" && len(links) > 0 {
-		meta.CanonicalURL = links[0]
+func normalizeMetadata(request model.Request, meta model.Metadata) model.Metadata {
+	if meta.CanonicalURL == "" {
+		meta.CanonicalURL = request.EffectiveURL()
 	}
 	return meta
 }

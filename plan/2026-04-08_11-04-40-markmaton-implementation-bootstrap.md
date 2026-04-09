@@ -3,6 +3,7 @@ mode: plan
 task: markmaton implementation bootstrap
 created_at: "2026-04-08T11:04:40-04:00"
 complexity: complex
+status: completed
 ---
 
 # Plan: markmaton implementation bootstrap
@@ -55,12 +56,12 @@ complexity: complex
 - Column spec: `references/issue-csv-spec.md`
 
 ## Acceptance Checklist
-- [ ] Go engine can accept JSON input and produce JSON output
-- [ ] First-pass Markdown conversion works on representative fixtures
-- [ ] Metadata, links, images, and quality signals are present
-- [ ] Python wrapper and CLI can invoke the engine
-- [ ] Golden tests exist for core page types
-- [ ] Automated coverage is unit-test-first and does not rely on broad integration suites
+- [x] Go engine can accept JSON input and produce JSON output
+- [x] First-pass Markdown conversion works on representative fixtures
+- [x] Metadata, links, images, and quality signals are present
+- [x] Python wrapper and CLI can invoke the engine
+- [x] Golden tests exist for core page types
+- [x] Automated coverage is unit-test-first and does not rely on broad integration suites
 
 ## Risks / Blockers
 - Main-content heuristics may over-prune real content

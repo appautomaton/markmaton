@@ -56,6 +56,19 @@ That means the Python wheel should eventually carry:
 - the Python package
 - the platform-specific Go binary
 
+The wheel strategy is explicitly:
+
+- platform-specific wheels, not `py3-none-any`
+- a bundled engine at `markmaton/bin/markmaton-engine*`
+- the same Python CLI contract across local dev and packaged installs
+
+The initial target matrix for release-readiness is:
+
+- Linux x86_64
+- macOS x86_64
+- macOS arm64
+- Windows x86_64
+
 This is why packaging must be treated as a separate concern from parser logic.
 
 ## Why this is explicit now
@@ -80,5 +93,7 @@ When we get to release work, we will need:
 - a build matrix for supported targets
 - a wheel layout that places the binary in `markmaton/bin`
 - a check that `uv tool` installs expose the Python CLI while the wrapper can still locate the bundled binary
+- a stable release workflow filename for PyPI Trusted Publishing
+- GitHub environments for `testpypi` and `pipy`
 
 That is release-track work, not bootstrap parser work.

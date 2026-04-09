@@ -2,9 +2,6 @@ package convert
 
 import (
 	"strings"
-
-	md "github.com/firecrawl/html-to-markdown"
-	"github.com/firecrawl/html-to-markdown/plugin"
 )
 
 func ToMarkdown(html string) (string, error) {
@@ -12,9 +9,6 @@ func ToMarkdown(html string) (string, error) {
 		return "", nil
 	}
 
-	converter := md.NewConverter("", true, nil)
-	converter.Use(plugin.GitHubFlavored())
-	converter.Use(plugin.RobustCodeBlock())
-
+	converter := DefaultBuilder("").Build()
 	return converter.ConvertString(html)
 }

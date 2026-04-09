@@ -1,0 +1,47 @@
+name: ci
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Run Go tests
+        run: go test ./...
+
+      - name: Run Python unit tests
+        run: python3 -m unittest discover -s tests -p 'test_*.py'
+
+      - name: Build local engine binary
+        run: |
+          mkdir -p bin
+          go build -o bin/markmaton-engine ./cmd/markmaton-engine
+
+      - name: Smoke local CLI against repo fixture
+        env:
+          MARKMATON_ENGINE: ${{ github.workspace }}/bin/markmaton-engine
+        run: |
+          python3 -m markmaton.cli convert \
+            --html-file testdata/fixtures/core/article.html \
+            --url https://example.com/articles/harnessing-parsers \
+            --output-format markdown > /tmp/markmaton-smoke.md
+          test -s /tmp/markmaton-smoke.md

@@ -17,13 +17,13 @@ func Extract(html string) (model.Metadata, error) {
 		Extras: map[string]string{},
 	}
 
-	meta.Title = strings.TrimSpace(doc.Find("title").First().Text())
-	meta.Description = content(doc, `meta[name="description"]`)
+	meta.Title = normalizeText(doc.Find("title").First().Text())
+	meta.Description = normalizeText(content(doc, `meta[name="description"]`))
 	meta.CanonicalURL = attr(doc, `link[rel="canonical"]`, "href")
 	meta.Language = attr(doc, "html[lang]", "lang")
-	meta.Author = content(doc, `meta[name="author"]`)
-	meta.OGTitle = content(doc, `meta[property="og:title"]`)
-	meta.OGDescription = content(doc, `meta[property="og:description"]`)
+	meta.Author = normalizeText(content(doc, `meta[name="author"]`))
+	meta.OGTitle = normalizeText(content(doc, `meta[property="og:title"]`))
+	meta.OGDescription = normalizeText(content(doc, `meta[property="og:description"]`))
 
 	if meta.Title == "" {
 		meta.Title = meta.OGTitle
@@ -43,4 +43,8 @@ func content(doc *goquery.Document, selector string) string {
 func attr(doc *goquery.Document, selector, name string) string {
 	value, _ := doc.Find(selector).First().Attr(name)
 	return strings.TrimSpace(value)
+}
+
+func normalizeText(value string) string {
+	return strings.Join(strings.Fields(strings.TrimSpace(value)), " ")
 }

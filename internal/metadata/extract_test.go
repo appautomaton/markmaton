@@ -1,19 +1,15 @@
 package metadata
 
 import (
-	"os"
-	"path/filepath"
 	"testing"
+
+	"github.com/appautomaton/markmaton/internal/testutil"
 )
 
 func TestExtractMetadata(t *testing.T) {
-	path := filepath.Join("..", "..", "testdata", "fixtures", "article.html")
-	data, err := os.ReadFile(path)
-	if err != nil {
-		t.Fatalf("read fixture: %v", err)
-	}
+	data := testutil.ReadFixture(t, "core/article.html")
 
-	meta, err := Extract(string(data))
+	meta, err := Extract(data)
 	if err != nil {
 		t.Fatalf("extract metadata: %v", err)
 	}
@@ -26,5 +22,16 @@ func TestExtractMetadata(t *testing.T) {
 	}
 	if meta.CanonicalURL != "https://example.com/articles/harnessing-parsers" {
 		t.Fatalf("unexpected canonical URL: %q", meta.CanonicalURL)
+	}
+}
+
+func TestExtractNormalizesTitleWhitespace(t *testing.T) {
+	meta, err := Extract(`<html><head><title>Abuse Investigator  @ OpenAI</title></head><body></body></html>`)
+	if err != nil {
+		t.Fatalf("extract metadata: %v", err)
+	}
+
+	if meta.Title != "Abuse Investigator @ OpenAI" {
+		t.Fatalf("unexpected normalized title: %q", meta.Title)
 	}
 }

@@ -11,6 +11,7 @@ venv/
 build/
 dist/
 *.egg-info/
+.hatch-build/
 
 # Coverage
 .coverage
@@ -19,10 +20,12 @@ htmlcov/
 
 # Go
 bin/
+markmaton/bin/markmaton-engine*
+markmaton/bin/markmaton-engine.exe
 *.test
 coverage.out
+tmp/
 
 # Editors
 .idea/
 .vscode/
-

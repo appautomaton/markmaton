@@ -3,6 +3,7 @@ mode: plan
 task: markmaton parser architecture
 created_at: "2026-04-08T10:38:05-04:00"
 complexity: complex
+status: completed
 ---
 
 # Plan: markmaton parser architecture
@@ -56,11 +57,11 @@ complexity: complex
 - Column spec: `references/issue-csv-spec.md`
 
 ## Acceptance Checklist
-- [ ] Firecrawl 参考实现的主链、fallback、短板已经说清楚
-- [ ] markmaton 的模块边界和目录结构已经定稿
-- [ ] Go/Python 的通信方式和职责分工已经定稿
-- [ ] issue CSV 已生成并能通过校验
-- [ ] 每一行 issue 都能单独执行和验证
+- [x] Firecrawl 参考实现的主链、fallback、短板已经说清楚
+- [x] markmaton 的模块边界和目录结构已经定稿
+- [x] Go/Python 的通信方式和职责分工已经定稿
+- [x] issue CSV 已生成并能通过校验
+- [x] 每一行 issue 都能单独执行和验证
 
 ## Risks / Blockers
 - Firecrawl 的底层依赖分散在 monorepo + 外部 Go repo，容易只看到 wrapper 看不到核心

@@ -24,3 +24,18 @@ func TestToMarkdownConvertsRichHTML(t *testing.T) {
 		}
 	}
 }
+
+func TestDefaultBuilderNamesAreDeterministic(t *testing.T) {
+	left := DefaultBuilder("")
+	right := DefaultBuilder("")
+
+	if strings.Join(left.PluginNames(), ",") != strings.Join(right.PluginNames(), ",") {
+		t.Fatalf("expected default plugin names to be deterministic")
+	}
+	if strings.Join(left.BeforeHookNames(), ",") != strings.Join(right.BeforeHookNames(), ",") {
+		t.Fatalf("expected default before hook names to be deterministic")
+	}
+	if strings.Join(left.AfterHookNames(), ",") != strings.Join(right.AfterHookNames(), ",") {
+		t.Fatalf("expected default after hook names to be deterministic")
+	}
+}

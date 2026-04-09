@@ -1,5 +1,5 @@
 [build-system]
-requires = ["hatchling>=1.27.0"]
+requires = ["hatchling>=1.27.0", "packaging>=24.0"]
 build-backend = "hatchling.build"
 
 [project]
@@ -29,3 +29,23 @@ Issues = "https://github.com/appautomaton/markmaton/issues"
 
 [project.scripts]
 markmaton = "markmaton.cli:main"
+
+[tool.hatch.build.targets.wheel]
+packages = ["markmaton"]
+
+[tool.hatch.build.targets.sdist]
+include = [
+  "/cmd",
+  "/internal",
+  "/markmaton",
+  "/tests",
+  "/testdata",
+  "/docs",
+  "/README.md",
+  "/LICENSE",
+  "/go.mod",
+  "/go.sum",
+  "/hatch_build.py",
+]
+
+[tool.hatch.build.hooks.custom]
