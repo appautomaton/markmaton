@@ -44,7 +44,7 @@ func TestProcessMatchesGoldenFixtures(t *testing.T) {
 				URL:  tc.url,
 				HTML: fixture,
 				Options: model.Options{
-					OnlyMainContent: true,
+					OnlyMainContent: model.Bool(true),
 				},
 			})
 			if err != nil {
@@ -64,7 +64,7 @@ func TestProcessFallsBackToFullContent(t *testing.T) {
 		URL:  "https://example.com/weird-layout",
 		HTML: html,
 		Options: model.Options{
-			OnlyMainContent: true,
+			OnlyMainContent: model.Bool(true),
 		},
 	})
 	if err != nil {
@@ -76,6 +76,38 @@ func TestProcessFallsBackToFullContent(t *testing.T) {
 	}
 	if response.Markdown == "" {
 		t.Fatalf("expected markdown after fallback")
+	}
+}
+
+func TestProcessHonorsExplicitFullContentMode(t *testing.T) {
+	html := `
+	<html>
+	  <body>
+	    <header><nav><a href="/home">Home</a></nav></header>
+	    <article><h1>Main Story</h1><p>Primary article body.</p></article>
+	    <section><h2>Visible page chrome</h2><p>Keep this in full-content mode.</p></section>
+	  </body>
+	</html>`
+
+	response, err := Process(model.Request{
+		URL:  "https://example.com/story",
+		HTML: html,
+		Options: model.Options{
+			OnlyMainContent: model.Bool(false),
+		},
+	})
+	if err != nil {
+		t.Fatalf("process failed: %v", err)
+	}
+
+	if response.Quality.UsedMainContent {
+		t.Fatalf("did not expect explicit full-content mode to report used_main_content=true")
+	}
+	if response.Quality.FallbackUsed {
+		t.Fatalf("did not expect explicit full-content mode to trigger fallback")
+	}
+	if !strings.Contains(response.Markdown, "Visible page chrome") {
+		t.Fatalf("expected full-content mode to preserve additional visible content")
 	}
 }
 

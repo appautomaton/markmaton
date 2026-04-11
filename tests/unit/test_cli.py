@@ -53,6 +53,29 @@ class CLITestCase(unittest.TestCase):
         self.assertEqual(exit_code, 0)
         self.assertEqual(output.getvalue(), "Hello\n")
 
+    @mock.patch("markmaton.cli.convert_html")
+    def test_cli_passes_full_content_flag_through_request(self, convert_mock: mock.Mock) -> None:
+        convert_mock.return_value = ConvertResponse(
+            markdown="Hello",
+            html_clean="<p>Hello</p>",
+            metadata=Metadata(),
+            links=[],
+            images=[],
+            quality=Quality(),
+        )
+
+        with tempfile.NamedTemporaryFile("w+", suffix=".html") as handle:
+            handle.write("<p>Hello</p>")
+            handle.flush()
+
+            output = io.StringIO()
+            with redirect_stdout(output):
+                exit_code = main(["convert", "--html-file", handle.name, "--full-content"])
+
+        self.assertEqual(exit_code, 0)
+        request = convert_mock.call_args.args[0]
+        self.assertFalse(request.options.only_main_content)
+
 
 if __name__ == "__main__":
     unittest.main()

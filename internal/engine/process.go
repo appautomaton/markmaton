@@ -16,18 +16,19 @@ import (
 
 func Process(request model.Request) (model.Response, error) {
 	request.ApplyDefaults()
+	onlyMainContent := request.Options.UseOnlyMainContent()
 
 	meta, err := metadata.Extract(request.HTML)
 	if err != nil {
 		return model.Response{}, err
 	}
 
-	response, err := runPipeline(request, meta, request.Options.OnlyMainContent, false)
+	response, err := runPipeline(request, meta, onlyMainContent, false)
 	if err != nil {
 		return model.Response{}, err
 	}
 
-	if request.Options.OnlyMainContent && quality.NeedsFallback(response.Quality) {
+	if onlyMainContent && quality.NeedsFallback(response.Quality) {
 		fallback, err := runPipeline(request, meta, false, true)
 		if err != nil {
 			return model.Response{}, err

@@ -8,12 +8,16 @@ class ModelsTestCase(unittest.TestCase):
         request = ConvertRequest(
             html="<p>Hello</p>",
             url="https://example.com",
-            options=ConvertOptions(include_selectors=["article"]),
+            options=ConvertOptions(
+                only_main_content=False,
+                include_selectors=["article"],
+            ),
         )
 
         payload = request.to_payload()
 
         self.assertEqual(payload["url"], "https://example.com")
+        self.assertFalse(payload["options"]["only_main_content"])
         self.assertEqual(payload["options"]["include_selectors"], ["article"])
 
     def test_response_from_dict(self) -> None:

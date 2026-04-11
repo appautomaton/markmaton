@@ -6,7 +6,7 @@ from pathlib import Path
 from unittest import mock
 
 from markmaton.engine import EngineNotFoundError, convert_html, discover_engine
-from markmaton.models import ConvertRequest
+from markmaton.models import ConvertOptions, ConvertRequest
 
 
 class EngineTestCase(unittest.TestCase):
@@ -46,6 +46,35 @@ class EngineTestCase(unittest.TestCase):
 
         self.assertEqual(response.markdown, "Hello")
         run_mock.assert_called_once()
+
+    @mock.patch("markmaton.engine.discover_engine")
+    @mock.patch("markmaton.engine.subprocess.run")
+    def test_convert_html_preserves_explicit_false_content_mode(self, run_mock: mock.Mock, discover_mock: mock.Mock) -> None:
+        discover_mock.return_value = Path("/tmp/markmaton-engine")
+        run_mock.return_value = mock.Mock(
+            returncode=0,
+            stdout=json.dumps(
+                {
+                    "markdown": "Hello",
+                    "html_clean": "<p>Hello</p>",
+                    "metadata": {"title": "Hello"},
+                    "links": [],
+                    "images": [],
+                    "quality": {"text_length": 5},
+                }
+            ),
+            stderr="",
+        )
+
+        convert_html(
+            ConvertRequest(
+                html="<p>Hello</p>",
+                options=ConvertOptions(only_main_content=False),
+            )
+        )
+
+        payload = json.loads(run_mock.call_args.kwargs["input"])
+        self.assertFalse(payload["options"]["only_main_content"])
 
 
 if __name__ == "__main__":

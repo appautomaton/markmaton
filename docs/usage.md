@@ -57,6 +57,14 @@ markmaton convert \
   --output-format json
 ```
 
+`--full-content` disables the main-content narrowing step, but it does **not** return raw page HTML as-is. Global cleanup still removes hidden nodes, modal chrome, skip links, and similar shell noise.
+
+### Content-mode semantics
+
+- Default mode: start with main-content extraction.
+- Automatic fallback: if the default result looks too weak, the engine reruns with broader content.
+- Explicit `--full-content`: skip main-content narrowing up front and run the broader cleanup path directly.
+
 ### Force include or exclude selectors
 
 ```bash
@@ -68,6 +76,10 @@ markmaton convert \
   --exclude-selector ".newsletter-modal" \
   --output-format json
 ```
+
+### Additional context flags
+
+`--final-url` passes the post-redirect URL and `--content-type` passes a MIME-type hint. Both sharpen canonical-URL resolution and metadata extraction when available.
 
 ## Python API
 
@@ -110,15 +122,7 @@ Returns:
 
 ## Engine discovery
 
-The Python wrapper looks for the Go engine in this order:
-
-1. explicit path passed by the caller
-2. `MARKMATON_ENGINE`
-3. packaged binary in `markmaton/bin/`
-4. local development binary in `./bin/`
-5. `markmaton-engine` on `PATH`
-
-This keeps local development and packaged installs on the same interface.
+The Python wrapper searches for the Go engine binary in a defined order. See [packaging layout](packaging-layout.md#binary-discovery-contract) for the full lookup sequence.
 
 ## When to pass `url`
 

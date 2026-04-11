@@ -75,6 +75,13 @@
 }
 ```
 
+语义约束：
+
+- `only_main_content` 缺省时，默认走 `main-content-first`
+- 显式传 `only_main_content: false` 时，必须保留调用方意图，不能被默认值逻辑覆盖
+- `full-content mode` 不是“原样返回整页 HTML”，而是跳过 main-content 收窄，但仍做全局清洗
+- automatic fallback 只是在默认路径结果太弱时触发，语义上不同于显式 full-content mode
+
 可选输入：
 
 ```json
@@ -146,6 +153,7 @@ internal/model/
 - `only_main_content`
 - include / exclude selectors
 - 保证后续转换拿到的是合理 HTML
+- `only_main_content=false` 时仍保留全局清洗，不等于 raw HTML passthrough
 
 ### `internal/resolve`
 
@@ -185,6 +193,7 @@ internal/model/
 - 判断结果是不是太空
 - 判断是否值得从 main-content 回退到 full-content
 - 给调用方一个可观测的质量信号
+- 不覆盖调用方显式选择的 `full-content mode`
 
 ## Recommended repo shape
 

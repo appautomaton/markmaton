@@ -6,7 +6,7 @@ import (
 )
 
 type Options struct {
-	OnlyMainContent  bool     `json:"only_main_content"`
+	OnlyMainContent  *bool    `json:"only_main_content,omitempty"`
 	IncludeSelectors []string `json:"include_selectors,omitempty"`
 	ExcludeSelectors []string `json:"exclude_selectors,omitempty"`
 }
@@ -52,13 +52,24 @@ type Response struct {
 }
 
 func (r *Request) ApplyDefaults() {
-	if !r.Options.OnlyMainContent {
-		r.Options.OnlyMainContent = true
-	}
+	r.Options.ApplyDefaults()
 
 	r.URL = strings.TrimSpace(r.URL)
 	r.FinalURL = strings.TrimSpace(r.FinalURL)
 	r.ContentType = strings.TrimSpace(r.ContentType)
+}
+
+func (o *Options) ApplyDefaults() {
+	if o.OnlyMainContent == nil {
+		o.OnlyMainContent = Bool(true)
+	}
+}
+
+func (o Options) UseOnlyMainContent() bool {
+	if o.OnlyMainContent == nil {
+		return true
+	}
+	return *o.OnlyMainContent
 }
 
 func (r Request) Validate() error {
@@ -75,4 +86,8 @@ func (r Request) EffectiveURL() string {
 	}
 
 	return r.URL
+}
+
+func Bool(value bool) *bool {
+	return &value
 }
