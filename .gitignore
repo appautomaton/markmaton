@@ -36,3 +36,7 @@ tmp/
 # Editors
 .idea/
 .vscode/
+
+# Local workflow state
+.codex/
+.planning/
