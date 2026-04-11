@@ -1,29 +1,25 @@
 # Documentation
 
-This directory mixes two kinds of material:
+## For users
 
-- current user-facing docs
-- internal research and architecture notes that explain why `markmaton` looks the way it does
+- [Usage guide](usage.md) — CLI and Python API reference
+- [Packaging layout](packaging-layout.md) — binary discovery, wheel strategy
 
-## Start here
+## For contributors
 
-- [Usage guide](usage.md)
-- [Local smoke flow](local-smoke.md)
-- [Packaging layout](packaging-layout.md)
-- [PyPI release path](pypi-release.md)
+- [Local smoke flow](local-smoke.md) — manual end-to-end testing
+- [PyPI release path](pypi-release.md) — build and publish workflow
 
-## Benchmarking and parser quality
+## Benchmarking
 
-- [Benchmark workflow](benchmark-workflow.md)
-- [Benchmark matrix](benchmark-matrix.md)
+- [Benchmark workflow](benchmark-workflow.md) — sampling, comparison, and promotion rules
+- [Benchmark matrix](benchmark-matrix.md) — current results and gap analysis
 
-## Architecture and reference notes
+## Historical design records
 
-- [Architecture brief](architecture-brief.md)
-- [Implementation handoff](implementation-handoff.md)
-- [Firecrawl reference audit](firecrawl-reference-audit.md)
-- [Firecrawl scrape traceback](firecrawl-scrape-traceback.md)
+These documents are in Chinese. They record the original design reasoning and are preserved as-is.
 
-> [!NOTE]
-> The architecture and Firecrawl notes are historical design records.
-> They are still useful, but the best starting point for using the package is the usage and packaging docs above.
+- [Architecture brief](architecture-brief.md) — design principles and module layout
+- [Implementation handoff](implementation-handoff.md) — milestone plan and risk analysis
+- [Firecrawl reference audit](firecrawl-reference-audit.md) — what to borrow, what to avoid
+- [Firecrawl scrape traceback](firecrawl-scrape-traceback.md) — end-to-end pipeline trace

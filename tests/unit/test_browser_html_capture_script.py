@@ -6,7 +6,7 @@ import unittest
 
 
 SCRIPT_PATH = pathlib.Path(
-    "skills/browser-html-capture/scripts/capture_html.py"
+    "skills/html-to-markdown/scripts/capture_html.py"
 )
 
 
@@ -30,14 +30,14 @@ class BrowserHtmlCaptureScriptTestCase(unittest.TestCase):
 
         self.assertEqual(args.url, "https://example.com")
         self.assertEqual(args.output_format, "json")
-        self.assertEqual(args.headless, "auto")
         self.assertEqual(args.timeout, 10.0)
         self.assertIsNone(args.wait_selector)
         self.assertIsNone(args.wait_text)
 
-    def test_resolve_headless_explicit(self) -> None:
-        self.assertEqual(self.module.resolve_headless("on"), (True, "cli"))
-        self.assertEqual(self.module.resolve_headless("off"), (False, "cli"))
+    def test_build_parser_has_no_headless_flag(self) -> None:
+        parser = self.module.build_parser()
+        args = parser.parse_args(["https://example.com"])
+        self.assertFalse(hasattr(args, "headless"))
 
     def test_render_output_html_mode(self) -> None:
         payload = {
@@ -77,7 +77,7 @@ class BrowserHtmlCaptureScriptTestCase(unittest.TestCase):
         self.assertIn('"html": "<html><body>ok</body></html>"', stdout.getvalue())
         self.assertEqual(calls[0][0], "https://example.com")
         self.assertEqual(calls[0][1]["wait_selector"], "main")
-        self.assertEqual(calls[0][1]["headless_mode"], "auto")
+        self.assertNotIn("headless_mode", calls[0][1])
 
     def test_main_emits_html_with_injected_capture_impl(self) -> None:
         def fake_capture(url, **kwargs):
@@ -111,6 +111,9 @@ class BrowserHtmlCaptureScriptTestCase(unittest.TestCase):
 
         self.assertEqual(rc, 1)
         self.assertIn("capture failed for https://example.com: boom", stderr.getvalue())
+
+    def test_find_chrome_is_callable(self) -> None:
+        self.assertTrue(callable(self.module.find_chrome))
 
 
 if __name__ == "__main__":

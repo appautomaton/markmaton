@@ -23,7 +23,7 @@ The wrapper looks for the engine in this order:
 
 That contract is implemented in:
 
-- `/Users/ac/dev/agents/firecrawl/markmaton/markmaton/engine.py`
+- `markmaton/engine.py`
 
 ## Local development layout
 
@@ -73,27 +73,8 @@ This is why packaging must be treated as a separate concern from parser logic.
 
 ## Why this is explicit now
 
-We do not want a hidden rule like:
+All discovery paths are explicit to prevent brittle hidden-rule behavior in packaged installs.
 
-- “the wrapper magically knows where the binary is”
+## Release work
 
-That always becomes brittle later.
-
-Instead, the rule is fixed now:
-
-- local dev path is explicit
-- packaged path is explicit
-- environment override is explicit
-
-## What this implies for release work later
-
-When we get to release work, we will need:
-
-- platform-specific wheels
-- a build matrix for supported targets
-- a wheel layout that places the binary in `markmaton/bin`
-- a check that `uv tool` installs expose the Python CLI while the wrapper can still locate the bundled binary
-- a stable release workflow filename for PyPI Trusted Publishing
-- GitHub environments for `testpypi` and `pipy`
-
-That is release-track work, not bootstrap parser work.
+See [PyPI release path](pypi-release.md) for the release automation plan, wheel matrix, and Trusted Publishing setup.

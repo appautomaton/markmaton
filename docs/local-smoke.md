@@ -1,25 +1,10 @@
 # Local Smoke Flow
 
-## Purpose
+Manual smoke path for the real Go engine end to end. Not part of the automated test suite.
 
-This is the manual smoke path for checking the real Go engine end to end.
+## Prerequisites
 
-It is intentionally manual.
-
-Automated coverage for `markmaton` should stay unit-test-first.
-
-## Local development environment
-
-`markmaton` now treats local Python development as:
-
-- `uv`-managed
-- pinned to Python `3.12`
-
-Recommended setup from the repo root:
-
-```bash
-uv sync --group dev
-```
+See the [Development section](../README.md#development) in the main README for environment setup.
 
 ## Build the engine
 
@@ -89,13 +74,8 @@ uv run python -m markmaton.cli convert \
 
 ## When to use this
 
-Use the smoke flow when:
-
-- a unit test passes but the real binary behavior is still suspicious
-- the packaging path changes
-- the CLI or engine contract changes
-
-Do not make this the default automated test path.
+- Unit test passes but binary behavior is suspicious
+- Packaging path or CLI/engine contract changes
 
 ## Local wheel smoke
 

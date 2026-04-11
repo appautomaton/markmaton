@@ -5,8 +5,12 @@
 [![PyPI version](https://img.shields.io/pypi/v/markmaton)](https://pypi.org/project/markmaton/)
 [![Python versions](https://img.shields.io/pypi/pyversions/markmaton)](https://pypi.org/project/markmaton/)
 
-`markmaton` is a lightweight HTML-to-Markdown parser for agent workflows.
-It takes already-fetched page HTML, cleans the structure, and returns Markdown plus page metadata.
+`markmaton` is a lightweight HTML-to-Markdown parser core built for agent workflows.
+
+It solves the last-mile parsing problem in a web pipeline: you already have page HTML,
+but it is still too noisy and awkward for downstream agent use. Feed `markmaton`
+HTML from a fetcher or browser layer and get back cleaner Markdown, metadata, links,
+images, and quality signals.
 
 > [!NOTE]
 > `markmaton` is a general parser, not a crawler.
@@ -14,10 +18,11 @@ It takes already-fetched page HTML, cleans the structure, and returns Markdown p
 
 ## Why it exists
 
-- Keep the parser core narrow and deterministic.
-- Accept both fetched HTML and rendered HTML.
-- Make HTML-to-Markdown robust enough for real agent workflows.
-- Ship a simple Python CLI around a Go engine.
+- Raw page HTML is usually not directly useful for downstream agent workflows.
+- Modern pages often mix the real content with navigation, overlays, cards, and app shell chrome.
+- `markmaton` keeps that cleanup and conversion step deterministic and separate from crawling.
+- The project stays narrow by design: no crawling, browser control, network, or LLM features.
+- The user-facing entrypoint is a Python CLI and API wrapped around a fast Go engine.
 
 ## Install
 
@@ -34,8 +39,8 @@ uv tool install markmaton
 ```
 
 > [!TIP]
-> `markmaton` itself now develops as a `uv`-managed Python 3.12 project.
-> The installed package still works through plain `pip`, but local development assumes `uv`.
+> The installed package works through plain `pip`.
+> Local development uses `uv` with Python 3.12.
 
 ## Quickstart
 
@@ -80,18 +85,9 @@ print(response.metadata.title)
 > Pass `url` whenever you can.
 > `markmaton` uses it as parsing context for canonical metadata and absolute link resolution.
 
-## What you get back
+## Output
 
-The JSON response includes:
-
-- `markdown`
-- `html_clean`
-- `metadata`
-- `links`
-- `images`
-- `quality`
-
-This keeps the parser useful both as a Markdown generator and as a page-normalization step in a larger workflow.
+JSON mode returns `markdown`, `html_clean`, `metadata`, `links`, `images`, and `quality`. See [response shape](docs/usage.md#response-shape) for details.
 
 ## Project shape
 
@@ -102,14 +98,13 @@ This keeps the parser useful both as a Markdown generator and as a page-normaliz
 
 ## Documentation
 
-Start here:
-
 - [Documentation index](docs/README.md)
 - [Usage guide](docs/usage.md)
 - [Packaging layout](docs/packaging-layout.md)
 - [PyPI release path](docs/pypi-release.md)
 - [Benchmark workflow](docs/benchmark-workflow.md)
 - [Benchmark matrix](docs/benchmark-matrix.md)
+- [AI agent skill](skills/html-to-markdown/SKILL.md) — for using `markmaton` inside an agent workflow
 
 ## Development
 
@@ -136,8 +131,7 @@ The repo is pinned to:
 - a committed `uv.lock`
 
 > [!IMPORTANT]
-> Automated coverage stays unit-test-first.
-> Live page visits and benchmark sampling are intentionally kept out of the default automated test path.
+> Automated tests are unit-test-first. Live page visits and benchmarks are manual.
 
 ## Release notes
 

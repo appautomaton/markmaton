@@ -1,45 +1,55 @@
 ---
 name: html-to-markdown
-description: Use when you already have page HTML and need to convert it into clean Markdown with metadata using markmaton. Best for workflows where Playwright, fetch, Firecrawl, or another upstream tool has already captured the HTML, and you want a deterministic HTML-to-Markdown step rather than LLM extraction.
+description: Convert a URL or HTML into clean Markdown with metadata using markmaton. Handles browser capture for JS-heavy pages and deterministic HTML-to-Markdown conversion in one skill.
 ---
 
 # HTML to Markdown
 
-Use this skill when:
+Converts a URL or HTML into clean Markdown plus metadata, links, images, and quality signals.
 
-- you already have page HTML
-- you want deterministic HTML-to-Markdown conversion
-- you want Markdown plus metadata, links, images, or quality signals
-- you want to use `markmaton` as a parser step, not as a crawler
+## From a URL
 
-Do not use this skill to visit URLs directly.
-Get HTML first, then pass it into `markmaton`.
+Capture the page and convert in one pipeline:
 
-If you do not have HTML yet and the page needs a real browser,
-use the companion `browser-html-capture` skill first.
+```bash
+uv run --script scripts/capture_html.py <url> \
+  | uv run --script scripts/markmaton_convert.py --from-capture --output-format json
+```
 
-Use the bundled PEP 723 script as the default execution path:
+The capture script outputs a JSON envelope by default. `--from-capture` reads it and extracts `html`, `url`, `final_url`, and `content_type` automatically — no context lost, URL typed once.
 
-- `scripts/markmaton_convert.py`
+- Add `--wait-selector <css>` or `--wait-text <string>` to the capture step for pages that need a readiness signal.
+- Prefer a simple fetch over browser capture for static articles, wikis, and server-rendered docs.
 
-Run it with:
+## From HTML
 
-- `uv run --script scripts/markmaton_convert.py ...`
+```bash
+uv run --script scripts/markmaton_convert.py --html-file page.html \
+  --url <url> --output-format json
+```
 
-This keeps the skill self-contained and isolates dependencies from the caller's runtime.
+Or from stdin:
 
-## Workflow
+```bash
+echo "$html" | uv run --script scripts/markmaton_convert.py --url <url>
+```
 
-1. Decide whether the upstream page source should be fetched HTML or rendered HTML.
-2. Pass the HTML into the bundled script.
-3. Prefer including the source `url`.
-4. Choose `markdown` or `json` output based on whether downstream steps need metadata and quality fields.
+Pass `--url` when available — it improves link resolution and canonical metadata.
 
-## Read these references as needed
+## Key defaults
 
-- For command syntax and script behavior:
-  - `references/usage.md`
-- For choosing fetched vs rendered HTML, and for parser defaults:
-  - `references/integration-patterns.md`
+- Output: `json`. Use `--output-format markdown` for raw Markdown only.
+- Main-content extraction: on. Use `--full-content` to disable.
+- Capture: always headless. Timeout `10s`, override with `--timeout`.
+- Browser discovery: user's Chrome → user's Chromium → Playwright's Chromium.
 
-Only read the reference file you need for the current task.
+## References
+
+Read only when needed:
+
+- `references/usage.md` — full CLI reference for both scripts
+- `references/integration-patterns.md` — browser vs fetch guidance, contracts, parser defaults
+
+## Core documentation
+
+For package internals, release process, and benchmarks: [docs/](../../docs/README.md)
