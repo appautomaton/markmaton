@@ -2,6 +2,23 @@
 
 All notable changes to `markmaton` will be documented in this file.
 
+## [0.1.6] - 2026-04-11
+
+### Added
+
+- end-to-end CLI integration coverage that exercises content-mode behavior against the current Go engine build
+- a unified `html-to-markdown` skill flow that can capture browser HTML and convert it in one pipeline
+
+### Changed
+
+- the capture workflow is now folded into `skills/html-to-markdown` instead of living as a separate `browser-html-capture` skill
+- skill and package docs now describe the tighter parser contract and the unified HTML capture path more clearly
+
+### Fixed
+
+- explicit `--full-content` / `only_main_content=False` requests now survive the Python-to-Go boundary instead of being silently reset
+- docs now distinguish explicit full-content mode from automatic fallback behavior
+
 ## [0.1.5] - 2026-04-09
 
 ### Added
