@@ -1,5 +1,8 @@
 # Firecrawl Scrape Traceback
 
+> [!NOTE]
+> File paths in this document reference a local Firecrawl checkout and may not match your environment.
+
 ## Why this document exists
 
 We do not want to tune `markmaton` against one pretty page at a time.
