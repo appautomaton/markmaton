@@ -89,6 +89,8 @@ from markmaton import ConvertOptions, ConvertRequest, convert_html
 request = ConvertRequest(
     html="<article><h1>Hello</h1><p>World</p></article>",
     url="https://example.com/article",
+    final_url="https://example.com/article",
+    content_type="text/html",
     options=ConvertOptions(
         only_main_content=True,
         include_selectors=[],
