@@ -12,7 +12,7 @@ SCRIPT_PATH = pathlib.Path(
 
 def load_module():
     spec = importlib.util.spec_from_file_location(
-        "browser_html_capture_script", SCRIPT_PATH
+        "capture_html_script", SCRIPT_PATH
     )
     module = importlib.util.module_from_spec(spec)
     assert spec.loader is not None
@@ -20,7 +20,7 @@ def load_module():
     return module
 
 
-class BrowserHtmlCaptureScriptTestCase(unittest.TestCase):
+class CaptureHtmlScriptTestCase(unittest.TestCase):
     def setUp(self) -> None:
         self.module = load_module()
 
