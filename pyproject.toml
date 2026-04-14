@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "markmaton"
-version = "0.1.6"
+version = "0.1.7"
 description = "Lightweight HTML-to-Markdown tooling for agent workflows."
 readme = "README.md"
 requires-python = ">=3.12"

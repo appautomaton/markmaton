@@ -2,6 +2,13 @@
 
 All notable changes to `markmaton` will be documented in this file.
 
+## [0.1.7] - 2026-04-13
+
+### Changed
+
+- renamed the capture-script test file and class to match the consolidated `html-to-markdown` skill naming
+- the Python API usage example now shows the optional `final_url` and `content_type` fields so the Python and CLI surfaces line up
+
 ## [0.1.6] - 2026-04-11
 
 ### Added
