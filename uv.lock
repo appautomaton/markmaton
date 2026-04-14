@@ -42,7 +42,7 @@ wheels = [
 
 [[package]]
 name = "markmaton"
-version = "0.1.6"
+version = "0.1.7"
 source = { editable = "." }
 
 [package.dev-dependencies]
