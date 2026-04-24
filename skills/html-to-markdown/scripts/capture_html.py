@@ -170,6 +170,7 @@ async def capture_once(
         browser = await uc.start(
             headless=True,
             browser_executable_path=chrome_path,
+            browser_args=["--use-mock-keychain"],
         )
         tab = await browser.get(url)
         await wait_for_capture_ready(
