@@ -7,6 +7,8 @@ import (
 	"strings"
 
 	"github.com/PuerkitoBio/goquery"
+
+	"github.com/appautomaton/markmaton/internal/safeurl"
 )
 
 type imageSource struct {
@@ -27,12 +29,15 @@ func ResolveHTML(html string, pageURL string) (string, error) {
 		if !exists {
 			return
 		}
-		if picked, ok := pickLargestSource(srcset); ok {
-			if abs, ok := absolutize(picked, baseURL); ok {
-				selection.SetAttr("src", abs)
-			} else {
-				selection.SetAttr("src", picked)
-			}
+		selection.RemoveAttr("srcset")
+		picked, ok := pickLargestSource(srcset)
+		if !ok || !safeurl.Resource(picked) {
+			return
+		}
+		if abs, ok := absolutize(picked, baseURL); ok {
+			selection.SetAttr("src", abs)
+		} else {
+			selection.SetAttr("src", strings.TrimSpace(picked))
 		}
 	})
 
@@ -41,18 +46,30 @@ func ResolveHTML(html string, pageURL string) (string, error) {
 		if !exists {
 			return
 		}
+		if !safeurl.Link(href) {
+			selection.RemoveAttr("href")
+			return
+		}
 		if abs, ok := absolutize(href, baseURL); ok {
 			selection.SetAttr("href", abs)
+		} else {
+			selection.SetAttr("href", strings.TrimSpace(href))
 		}
 	})
 
-	doc.Find("img[src], source[src]").Each(func(_ int, selection *goquery.Selection) {
+	doc.Find("img[src], source[src], iframe[src], video[src], audio[src]").Each(func(_ int, selection *goquery.Selection) {
 		src, exists := selection.Attr("src")
 		if !exists {
 			return
 		}
+		if !safeurl.Resource(src) {
+			selection.RemoveAttr("src")
+			return
+		}
 		if abs, ok := absolutize(src, baseURL); ok {
 			selection.SetAttr("src", abs)
+		} else {
+			selection.SetAttr("src", strings.TrimSpace(src))
 		}
 	})
 
@@ -70,12 +87,12 @@ func effectiveBaseURL(doc *goquery.Document, pageURL string) *url.URL {
 	}
 
 	parsedPageURL, err := url.Parse(pageURL)
-	if err != nil {
+	if err != nil || !safeurl.WebBase(parsedPageURL.String()) {
 		return nil
 	}
 
 	if baseHref, exists := doc.Find("base[href]").First().Attr("href"); exists {
-		if parsedBase, err := parsedPageURL.Parse(baseHref); err == nil {
+		if parsedBase, err := parsedPageURL.Parse(baseHref); err == nil && safeurl.WebBase(parsedBase.String()) {
 			return parsedBase
 		}
 	}
@@ -113,6 +130,9 @@ func pickLargestSource(srcset string) (string, bool) {
 			continue
 		}
 
+		if !safeurl.Resource(tokens[0]) {
+			continue
+		}
 		candidate := imageSource{URL: tokens[0], Size: 1}
 		if len(tokens) > 1 {
 			descriptor := tokens[len(tokens)-1]

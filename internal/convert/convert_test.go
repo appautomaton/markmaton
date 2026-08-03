@@ -1,7 +1,10 @@
 package convert
 
 import (
+	"context"
+	"errors"
 	"strings"
+	"sync"
 	"testing"
 )
 
@@ -25,17 +28,65 @@ func TestToMarkdownConvertsRichHTML(t *testing.T) {
 	}
 }
 
-func TestDefaultBuilderNamesAreDeterministic(t *testing.T) {
-	left := DefaultBuilder("")
-	right := DefaultBuilder("")
+func TestToMarkdownPreservesMeaningfulStandaloneEmbed(t *testing.T) {
+	markdown, err := ToMarkdown(`<iframe src="https://www.youtube.com/embed/video-id"></iframe>`)
+	if err != nil {
+		t.Fatalf("convert embed: %v", err)
+	}
+	want := "[Embedded video](https://www.youtube.com/embed/video-id)"
+	if markdown != want {
+		t.Fatalf("unexpected embed output\nwant: %s\ngot:  %s", want, markdown)
+	}
+}
 
-	if strings.Join(left.PluginNames(), ",") != strings.Join(right.PluginNames(), ",") {
-		t.Fatalf("expected default plugin names to be deterministic")
+func TestToMarkdownUsesCanonicalNativeOutput(t *testing.T) {
+	markdown, err := ToMarkdown(`<p>Before</p><hr><p>After</p>`)
+	if err != nil {
+		t.Fatalf("convert with Native converter: %v", err)
 	}
-	if strings.Join(left.BeforeHookNames(), ",") != strings.Join(right.BeforeHookNames(), ",") {
-		t.Fatalf("expected default before hook names to be deterministic")
+	if !strings.Contains(markdown, "\n\n---\n\n") {
+		t.Fatalf("expected canonical Native thematic break:\n%s", markdown)
 	}
-	if strings.Join(left.AfterHookNames(), ",") != strings.Join(right.AfterHookNames(), ",") {
-		t.Fatalf("expected default after hook names to be deterministic")
+}
+
+func TestToMarkdownContextRejectsNilContext(t *testing.T) {
+	if _, err := ToMarkdownContext(nil, `<p>Hello</p>`); err == nil {
+		t.Fatal("expected nil context error")
+	}
+}
+
+func TestToMarkdownContextHonorsCancellation(t *testing.T) {
+	ctx, cancel := context.WithCancel(context.Background())
+	cancel()
+	_, err := ToMarkdownContext(ctx, `<p>Hello</p>`)
+	if !errors.Is(err, context.Canceled) {
+		t.Fatalf("expected context cancellation, got %v", err)
+	}
+}
+
+func TestNativeConversionSupportsConcurrentUse(t *testing.T) {
+	const workers = 24
+	input := `<article><h1>Concurrent</h1><p>Hello <strong>world</strong>.</p></article>`
+
+	var wait sync.WaitGroup
+	failures := make(chan error, workers)
+	for worker := 0; worker < workers; worker++ {
+		wait.Add(1)
+		go func() {
+			defer wait.Done()
+			markdown, err := ToMarkdown(input)
+			if err != nil {
+				failures <- err
+				return
+			}
+			if !strings.Contains(markdown, "# Concurrent") || !strings.Contains(markdown, "Hello **world**.") {
+				failures <- errors.New("concurrent conversion returned unexpected output")
+			}
+		}()
+	}
+	wait.Wait()
+	close(failures)
+	for err := range failures {
+		t.Fatal(err)
 	}
 }

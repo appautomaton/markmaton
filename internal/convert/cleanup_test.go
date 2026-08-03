@@ -7,37 +7,13 @@ import (
 	"github.com/PuerkitoBio/goquery"
 )
 
-func TestDefaultHookRegistrationsExposeNamedHooks(t *testing.T) {
-	builder := DefaultBuilder("")
-
-	beforeNames := strings.Join(builder.BeforeHookNames(), ",")
-	for _, expected := range []string{"drop_button_like_elements"} {
-		if !strings.Contains(beforeNames, expected) {
-			t.Fatalf("expected before hook %q to be registered, got %q", expected, beforeNames)
-		}
-	}
-
-	afterNames := strings.Join(builder.AfterHookNames(), ",")
-	for _, expected := range []string{
-		"trim_opening_shell_controls",
-		"drop_standalone_control_lines",
-		"drop_standalone_metric_lines",
-		"drop_redundant_opening_heading_echoes",
-		"collapse_adjacent_duplicate_lines",
-	} {
-		if !strings.Contains(afterNames, expected) {
-			t.Fatalf("expected after hook %q to be registered, got %q", expected, afterNames)
-		}
-	}
-}
-
 func TestDropButtonLikeElementsRemovesButtonContent(t *testing.T) {
 	doc, err := goquery.NewDocumentFromReader(strings.NewReader(`<article><button>Copy</button><p>Hello</p></article>`))
 	if err != nil {
 		t.Fatalf("document parse failed: %v", err)
 	}
 
-	dropButtonLikeElements()(doc.Selection)
+	removeButtonLikeElements(doc.Selection)
 	if strings.Contains(doc.Text(), "Copy") {
 		t.Fatalf("expected button text to be removed")
 	}
@@ -62,6 +38,36 @@ func TestTrimOpeningShellControlsDropsLeadingChrome(t *testing.T) {
 	}
 	if !strings.Contains(got, "# Real title") {
 		t.Fatalf("expected real title to remain, got:\n%s", got)
+	}
+}
+
+func TestTrimOpeningShellControlsDropsSpacedRepositoryChrome(t *testing.T) {
+	markdown := strings.Join([]string{
+		"[microsoft](https://github.com/microsoft) / **[vscode](https://github.com/microsoft/vscode)** Public",
+		"- [Notifications](https://github.com/login)",
+		"- [Fork 39k](https://github.com/login)",
+		"",
+		"# Iteration Plan",
+		"",
+		"Body starts here.",
+	}, "\n")
+
+	got := trimOpeningShellControls()(markdown)
+	if firstNonEmpty := nextNonEmptyLine(strings.Split(got, "\n"), 0); firstNonEmpty != "# Iteration Plan" {
+		t.Fatalf("expected repository chrome to be trimmed, got:\n%s", got)
+	}
+}
+
+func TestTrimOpeningShellControlsPreservesMeaningfulOpeningLinks(t *testing.T) {
+	markdown := strings.Join([]string{
+		"[Embedded video](https://www.youtube.com/watch?v=demo)",
+		"",
+		"Video description.",
+	}, "\n")
+
+	got := trimOpeningShellControls()(markdown)
+	if got != markdown {
+		t.Fatalf("expected meaningful opening link to remain\nwant:\n%s\n\ngot:\n%s", markdown, got)
 	}
 }
 
@@ -118,6 +124,42 @@ func TestDropStandaloneControlLinesRemovesControlLinks(t *testing.T) {
 		if strings.Contains(got, unwanted) {
 			t.Fatalf("expected %q to be removed, got:\n%s", unwanted, got)
 		}
+	}
+}
+
+func TestDropStandaloneControlLinesRemovesCompositeControls(t *testing.T) {
+	markdown := strings.Join([]string{
+		"Sorted by: [Reset to default](https://example.com?sort=default)",
+		"Highest score (default) Trending (recent votes count more) Date modified (newest first) Date created (oldest first)",
+		"",
+		"Question body",
+	}, "\n")
+
+	got := dropStandaloneControlLines()(markdown)
+	for _, unwanted := range []string{"Reset to default", "Highest score", "Trending", "Date modified", "Date created"} {
+		if strings.Contains(got, unwanted) {
+			t.Fatalf("expected composite control %q to be removed, got:\n%s", unwanted, got)
+		}
+	}
+	if !strings.Contains(got, "Question body") {
+		t.Fatalf("expected question body to remain, got:\n%s", got)
+	}
+}
+
+func TestDropStandaloneControlLinesPreservesQuotedFencesAndPunctuation(t *testing.T) {
+	markdown := strings.Join([]string{
+		"> Code:",
+		">",
+		"> ```",
+		"> value",
+		"> ```",
+		"",
+		"---",
+	}, "\n")
+
+	got := dropStandaloneControlLines()(markdown)
+	if got != markdown {
+		t.Fatalf("expected punctuation-only Markdown structure to remain\nwant:\n%s\n\ngot:\n%s", markdown, got)
 	}
 }
 

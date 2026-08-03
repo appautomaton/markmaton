@@ -4,6 +4,8 @@ import (
 	"strings"
 
 	"github.com/PuerkitoBio/goquery"
+
+	"github.com/appautomaton/markmaton/internal/safeurl"
 )
 
 func Extract(html string) ([]string, error) {
@@ -20,7 +22,7 @@ func Extract(html string) ([]string, error) {
 			return
 		}
 		href = strings.TrimSpace(href)
-		if href == "" {
+		if !safeurl.Link(href) {
 			return
 		}
 		if _, exists := seen[href]; exists {

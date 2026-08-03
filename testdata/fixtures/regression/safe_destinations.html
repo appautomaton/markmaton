@@ -1,0 +1,22 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <title>Safe destinations</title>
+  <base href="javascript:alert(1)">
+</head>
+<body>
+  <article>
+    <h1>Safe Destinations</h1>
+    <p>
+      <a href="javascript:alert(1)">Run code</a>
+      <a href="data:text/html,hello">Open data</a>
+      <a href="mailto:reader@example.com">Email reader</a>
+      <a href="tel:+12025550123">Call reader</a>
+      <a href="/docs">Read docs</a>
+    </p>
+    <p><img src="data:image/svg+xml,bad" alt="Unsafe image"></p>
+    <p><img src="/fallback.jpg" srcset="/small.jpg 1x, javascript:alert(1) 2x" alt="Safe fallback"></p>
+    <iframe src="vbscript:msgbox(1)" title="Unsafe frame"></iframe>
+  </article>
+</body>
+</html>

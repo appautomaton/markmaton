@@ -4,74 +4,42 @@ import (
 	"regexp"
 	"strings"
 
-	md "github.com/firecrawl/html-to-markdown"
 	"github.com/PuerkitoBio/goquery"
 )
 
 var (
-	linkOnlyLineRegex   = regexp.MustCompile(`^\[[^\]]+\]\([^)]+\)$`)
-	multiLinkLineRegex  = regexp.MustCompile(`^(?:\[[^\]]+\]\([^)]+\)(?:\s+|$))+$`)
-	pureNumberLineRegex = regexp.MustCompile(`^\d+$`)
-	repoChromeLineRegex = regexp.MustCompile(`^\[[^\]]+\]\([^)]+\)/\s+\*\*\[[^\]]+\]\([^)]+\)\*\*(?:\s+\w+)?$`)
-	linkLabelRegex      = regexp.MustCompile(`^\[([^\]]+)\]\([^)]+\)$`)
-	linkLabelsRegex     = regexp.MustCompile(`\[([^\]]+)\]\([^)]+\)`)
+	linkOnlyLineRegex    = regexp.MustCompile(`^\[[^\]]+\]\([^)]+\)$`)
+	multiLinkLineRegex   = regexp.MustCompile(`^(?:\[[^\]]+\]\([^)]+\)(?:\s+|$))+$`)
+	pureNumberLineRegex  = regexp.MustCompile(`^\d+$`)
+	repoChromeLineRegex  = regexp.MustCompile(`^\[[^\]]+\]\([^)]+\)\s*/\s+\*\*\[[^\]]+\]\([^)]+\)\*\*(?:\s+\w+)?$`)
+	repoMetricLabelRegex = regexp.MustCompile(`^(?:notifications|fork|star|watch|unwatch)(?:\s+[\d.,]+[km]?)?$`)
+	linkLabelRegex       = regexp.MustCompile(`^\[([^\]]+)\]\([^)]+\)$`)
+	linkLabelsRegex      = regexp.MustCompile(`\[([^\]]+)\]\([^)]+\)`)
 )
 
 var standaloneControlLines = map[string]struct{}{
-	"add a comment":                  {},
-	"copy":                           {},
-	"follow":                         {},
-	"highest score (default)":        {},
-	"improve this answer":            {},
-	"improve this question":          {},
-	"new issue":                      {},
-	"reset to default":               {},
-	"share":                          {},
-	"sorted by:":                     {},
+	"add a comment":                      {},
+	"copy":                               {},
+	"follow":                             {},
+	"highest score (default)":            {},
+	"improve this answer":                {},
+	"improve this question":              {},
+	"new issue":                          {},
+	"reset to default":                   {},
+	"share":                              {},
+	"sorted by:":                         {},
 	"trending (recent votes count more)": {},
-	"date modified (newest first)":   {},
-	"date created (oldest first)":    {},
+	"date modified (newest first)":       {},
+	"date created (oldest first)":        {},
 }
 
-func DefaultBeforeHookRegistrations() []BeforeHookRegistration {
-	return []BeforeHookRegistration{
-		newBeforeHookRegistration("drop_button_like_elements", dropButtonLikeElements()),
-	}
+func removeButtonLikeElements(selection *goquery.Selection) {
+	selection.Find("button, [role='button']").Each(func(_ int, matched *goquery.Selection) {
+		matched.Remove()
+	})
 }
 
-func DefaultAfterHookRegistrations() []AfterHookRegistration {
-	return []AfterHookRegistration{
-		newAfterHookRegistration("trim_opening_shell_controls", trimOpeningShellControls()),
-		newAfterHookRegistration("drop_standalone_control_lines", dropStandaloneControlLines()),
-		newAfterHookRegistration("drop_standalone_metric_lines", dropStandaloneMetricLines()),
-		newAfterHookRegistration("drop_redundant_opening_heading_echoes", dropRedundantOpeningHeadingEchoes()),
-		newAfterHookRegistration("collapse_adjacent_duplicate_lines", collapseAdjacentDuplicateLines()),
-	}
-}
-
-func newBeforeHookRegistration(name string, hook md.BeforeHook) BeforeHookRegistration {
-	return BeforeHookRegistration{
-		Name: name,
-		Hook: hook,
-	}
-}
-
-func newAfterHookRegistration(name string, hook md.Afterhook) AfterHookRegistration {
-	return AfterHookRegistration{
-		Name: name,
-		Hook: hook,
-	}
-}
-
-func dropButtonLikeElements() md.BeforeHook {
-	return func(selec *goquery.Selection) {
-		selec.Find("button, [role='button']").Each(func(_ int, s *goquery.Selection) {
-			s.Remove()
-		})
-	}
-}
-
-func trimOpeningShellControls() md.Afterhook {
+func trimOpeningShellControls() markdownPolicy {
 	return func(markdown string) string {
 		lines := strings.Split(strings.ReplaceAll(markdown, "\r\n", "\n"), "\n")
 		start := 0
@@ -110,7 +78,7 @@ func trimOpeningShellControls() md.Afterhook {
 	}
 }
 
-func dropStandaloneControlLines() md.Afterhook {
+func dropStandaloneControlLines() markdownPolicy {
 	return func(markdown string) string {
 		lines := strings.Split(strings.ReplaceAll(markdown, "\r\n", "\n"), "\n")
 		filtered := make([]string, 0, len(lines))
@@ -133,7 +101,7 @@ func dropStandaloneControlLines() md.Afterhook {
 	}
 }
 
-func dropStandaloneMetricLines() md.Afterhook {
+func dropStandaloneMetricLines() markdownPolicy {
 	return func(markdown string) string {
 		lines := strings.Split(strings.ReplaceAll(markdown, "\r\n", "\n"), "\n")
 		filtered := make([]string, 0, len(lines))
@@ -160,7 +128,7 @@ func dropStandaloneMetricLines() md.Afterhook {
 	}
 }
 
-func dropRedundantOpeningHeadingEchoes() md.Afterhook {
+func dropRedundantOpeningHeadingEchoes() markdownPolicy {
 	return func(markdown string) string {
 		lines := strings.Split(strings.ReplaceAll(markdown, "\r\n", "\n"), "\n")
 		filtered := make([]string, 0, len(lines))
@@ -199,7 +167,7 @@ func dropRedundantOpeningHeadingEchoes() md.Afterhook {
 	}
 }
 
-func collapseAdjacentDuplicateLines() md.Afterhook {
+func collapseAdjacentDuplicateLines() markdownPolicy {
 	return func(markdown string) string {
 		lines := strings.Split(strings.ReplaceAll(markdown, "\r\n", "\n"), "\n")
 		collapsed := make([]string, 0, len(lines))
@@ -252,19 +220,25 @@ func isOpeningShellLine(line string) bool {
 	if repoChromeLineRegex.MatchString(line) {
 		return true
 	}
-	if linkOnlyLineRegex.MatchString(line) && len([]rune(line)) <= 120 {
+	if isOpeningShellLink(line) {
 		return true
 	}
 	if strings.HasPrefix(line, "- ") {
 		content := strings.TrimSpace(strings.TrimPrefix(line, "- "))
-		if isStandaloneControlLine(content) {
-			return true
-		}
-		if linkOnlyLineRegex.MatchString(content) && len([]rune(content)) <= 120 {
+		if isStandaloneControlLine(content) || isOpeningShellLink(content) {
 			return true
 		}
 	}
 	return false
+}
+
+func isOpeningShellLink(line string) bool {
+	match := linkLabelRegex.FindStringSubmatch(strings.TrimSpace(line))
+	if len(match) != 2 {
+		return false
+	}
+	label := strings.ToLower(strings.TrimSpace(strings.ReplaceAll(match[1], `\`, "")))
+	return repoMetricLabelRegex.MatchString(label)
 }
 
 func isStandaloneControlLine(line string) bool {
@@ -284,7 +258,29 @@ func isStandaloneControlLine(line string) bool {
 			return true
 		}
 	}
-	return false
+	return isCompositeControlLine(line)
+}
+
+func isCompositeControlLine(line string) bool {
+	candidate := linkLabelsRegex.ReplaceAllString(line, "$1")
+	candidate = strings.ToLower(strings.ReplaceAll(candidate, `\`, ""))
+	matchedControl := false
+	for phrase := range standaloneControlLines {
+		if strings.Contains(candidate, phrase) {
+			matchedControl = true
+			candidate = strings.ReplaceAll(candidate, phrase, " ")
+		}
+	}
+	if !matchedControl {
+		return false
+	}
+	candidate = strings.Map(func(r rune) rune {
+		if (r >= 'a' && r <= 'z') || (r >= '0' && r <= '9') {
+			return r
+		}
+		return ' '
+	}, candidate)
+	return strings.TrimSpace(candidate) == ""
 }
 
 func isStandalonePaginationLine(line string) bool {

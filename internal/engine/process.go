@@ -1,6 +1,7 @@
 package engine
 
 import (
+	"context"
 	"strings"
 
 	"github.com/appautomaton/markmaton/internal/cleanhtml"
@@ -15,7 +16,21 @@ import (
 )
 
 func Process(request model.Request) (model.Response, error) {
+	return ProcessContext(context.Background(), request)
+}
+
+func ProcessContext(ctx context.Context, request model.Request) (model.Response, error) {
+	if ctx == nil {
+		ctx = context.Background()
+	}
+	if err := ctx.Err(); err != nil {
+		return model.Response{}, err
+	}
+
 	request.ApplyDefaults()
+	if err := request.Validate(); err != nil {
+		return model.Response{}, err
+	}
 	onlyMainContent := request.Options.UseOnlyMainContent()
 
 	meta, err := metadata.Extract(request.HTML)
@@ -23,13 +38,13 @@ func Process(request model.Request) (model.Response, error) {
 		return model.Response{}, err
 	}
 
-	response, err := runPipeline(request, meta, onlyMainContent, false)
+	response, err := runPipeline(ctx, request, meta, onlyMainContent, false)
 	if err != nil {
 		return model.Response{}, err
 	}
 
 	if onlyMainContent && quality.NeedsFallback(response.Quality) {
-		fallback, err := runPipeline(request, meta, false, true)
+		fallback, err := runPipeline(ctx, request, meta, false, true)
 		if err != nil {
 			return model.Response{}, err
 		}
@@ -39,7 +54,11 @@ func Process(request model.Request) (model.Response, error) {
 	return response, nil
 }
 
-func runPipeline(request model.Request, meta model.Metadata, onlyMainContent bool, fallbackUsed bool) (model.Response, error) {
+func runPipeline(ctx context.Context, request model.Request, meta model.Metadata, onlyMainContent bool, fallbackUsed bool) (model.Response, error) {
+	if err := ctx.Err(); err != nil {
+		return model.Response{}, err
+	}
+
 	cleaned, err := cleanhtml.Clean(
 		request.HTML,
 		onlyMainContent,
@@ -55,7 +74,7 @@ func runPipeline(request model.Request, meta model.Metadata, onlyMainContent boo
 		return model.Response{}, err
 	}
 
-	markdown, err := convert.ToMarkdown(resolved)
+	markdown, err := convert.ToMarkdownContext(ctx, resolved)
 	if err != nil {
 		return model.Response{}, err
 	}

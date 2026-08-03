@@ -1,6 +1,11 @@
 package engine
 
 import (
+	"context"
+	"errors"
+	"os"
+	"path/filepath"
+	"sort"
 	"strings"
 	"testing"
 
@@ -8,41 +13,100 @@ import (
 	"github.com/appautomaton/markmaton/internal/testutil"
 )
 
-func TestProcessMatchesGoldenFixtures(t *testing.T) {
-	tests := []struct {
-		name    string
-		url     string
-		fixture string
-		golden  string
-	}{
-		{
-			name:    "article",
-			url:     "https://example.com/articles/harnessing-parsers",
-			fixture: "core/article.html",
-			golden:  "core/article.md",
-		},
-		{
-			name:    "docs",
-			url:     "https://example.com/docs/setup",
-			fixture: "core/docs.html",
-			golden:  "core/docs.md",
-		},
-		{
-			name:    "news",
-			url:     "https://example.com/news",
-			fixture: "core/news.html",
-			golden:  "core/news.md",
-		},
-	}
+type processGoldenFixture struct {
+	name    string
+	url     string
+	fixture string
+	golden  string
+}
 
-	for _, tc := range tests {
-		t.Run(tc.name, func(t *testing.T) {
-			fixture := loadFixture(t, tc.fixture)
-			expected := loadGolden(t, tc.golden)
+var processGoldenFixtures = []processGoldenFixture{
+	{name: "article", url: "https://example.com/articles/harnessing-parsers", fixture: "core/article.html", golden: "core/article.md"},
+	{name: "docs", url: "https://example.com/docs/setup", fixture: "core/docs.html", golden: "core/docs.md"},
+	{name: "news", url: "https://example.com/news", fixture: "core/news.html", golden: "core/news.md"},
+}
+
+var processExactRegressionFixtures = []processGoldenFixture{
+	{name: "embedded media", url: "https://example.com/articles/media", fixture: "regression/embedded_media.html", golden: "regression/embedded_media.md"},
+	{name: "native semantic structures", url: "https://example.com/issues/42", fixture: "regression/native_semantic_structures.html", golden: "regression/native_semantic_structures.md"},
+	{name: "safe destinations", url: "https://example.com/articles/safety", fixture: "regression/safe_destinations.html", golden: "regression/safe_destinations.md"},
+}
+
+type processRegressionFixture struct {
+	name          string
+	url           string
+	fixture       string
+	expected      []string
+	unwanted      []string
+	firstNonEmpty string
+	allowFallback bool
+}
+
+var processRegressionFixtures = []processRegressionFixture{
+	{
+		name:     "careers landing",
+		url:      "https://openai.com/careers/",
+		fixture:  "regression/careers_landing.html",
+		expected: []string{"Develop safe, beneficial AI systems", "[View open roles](https://openai.com/careers/search/)"},
+	},
+	{
+		name:     "card grid",
+		url:      "https://openai.com/news/engineering/",
+		fixture:  "regression/card_grid.html",
+		expected: []string{"Engineering", "From model to agent: Equipping the Responses API with a computer environment", "Mar 11, 2026", "Beyond rate limits: scaling access to Codex and Sora", "Feb 13, 2026"},
+		unwanted: []string{"Filter", "Sort", "Switch cards to show Media", "Switch cards to hide Media"},
+	},
+	{
+		name:     "job detail",
+		url:      "https://jobs.ashbyhq.com/openai/example/application",
+		fixture:  "regression/job_detail.html",
+		expected: []string{"Abuse Investigator", "San Francisco; Remote - US", "$288K – $425K • Offers Equity"},
+	},
+	{
+		name:     "blog shell",
+		url:      "https://developers.openai.com/blog",
+		fixture:  "regression/openai_blog_shell.html",
+		expected: []string{"Launch notes for the Responses API"},
+		unwanted: []string{"Search the blog", "Search docs", "Primary navigation", "{{ className }}"},
+	},
+	{
+		name:     "repository shell",
+		url:      "https://github.com/zellij-org/zellij",
+		fixture:  "regression/github_repo_shell.html",
+		expected: []string{"A terminal workspace with batteries included."},
+		unwanted: []string{"Skip to content", "You signed in with another tab or window", "Dismiss alert", "{{ className }}", "Uh oh!", "Please reload this page", "Repository files navigation"},
+	},
+	{
+		name:          "discussion thread",
+		url:           "https://stackoverflow.com/questions/1732348/regex-match-open-tags-except-xhtml-self-contained-tags",
+		fixture:       "regression/stackoverflow_question_thread.html",
+		expected:      []string{"I need to match all of these opening tags:", "36 Answers", "You can't parse \\[X\\]HTML with regex."},
+		unwanted:      []string{"Collectives™ on Stack Overflow", "Find centralized, trusted content", "Knowledge at work", "[Share](", "Improve this question", "Reset to default"},
+		firstNonEmpty: "I need to match all of these opening tags:",
+		allowFallback: true,
+	},
+	{
+		name:          "issue timeline",
+		url:           "https://github.com/microsoft/vscode/issues/286040",
+		fixture:       "regression/github_issue_timeline.html",
+		expected:      []string{"Iteration Plan for January 2026", "# Iteration Plan for January 2026 \\#286040", "This plan captures our work in **January 2026**.", "## Plan Items", "Closed"},
+		unwanted:      []string{"Skip to content", "You signed in with another tab or window", "Dismiss alert", "[New issue](", "[Iteration Plan for January 2026](https://github.com/microsoft/vscode/issues/286040#top)#286040"},
+		firstNonEmpty: "# Iteration Plan for January 2026 \\#286040",
+		allowFallback: true,
+	},
+}
+
+func TestProcessMatchesGoldenFixtures(t *testing.T) {
+	fixtures := append(append([]processGoldenFixture(nil), processGoldenFixtures...), processExactRegressionFixtures...)
+	for _, fixture := range fixtures {
+		fixture := fixture
+		t.Run(fixture.name, func(t *testing.T) {
+			html := loadFixture(t, fixture.fixture)
+			expected := loadGolden(t, fixture.golden)
 
 			response, err := Process(model.Request{
-				URL:  tc.url,
-				HTML: fixture,
+				URL:  fixture.url,
+				HTML: html,
 				Options: model.Options{
 					OnlyMainContent: model.Bool(true),
 				},
@@ -125,208 +189,123 @@ func TestProcessUsesRequestURLAsCanonicalFallback(t *testing.T) {
 	}
 }
 
-func TestProcessPreservesCareersLandingSignals(t *testing.T) {
-	response, err := Process(model.Request{
-		URL:  "https://openai.com/careers/",
-		HTML: loadFixture(t, "regression/careers_landing.html"),
-	})
-	if err != nil {
-		t.Fatalf("process failed: %v", err)
-	}
-
-	if response.Quality.FallbackUsed {
-		t.Fatalf("did not expect fallback for careers landing fixture")
-	}
-	if !strings.Contains(response.Markdown, "Develop safe, beneficial AI systems") {
-		t.Fatalf("expected careers hero copy to remain")
-	}
-	if !strings.Contains(response.Markdown, "[View open roles](https://openai.com/careers/search/)") {
-		t.Fatalf("expected primary careers CTA to remain")
-	}
-}
-
-func TestProcessCleansGenericCardListControls(t *testing.T) {
-	response, err := Process(model.Request{
-		URL:  "https://openai.com/news/engineering/",
-		HTML: loadFixture(t, "regression/card_grid.html"),
-	})
-	if err != nil {
-		t.Fatalf("process failed: %v", err)
-	}
-
-	for _, unwanted := range []string{
-		"Filter",
-		"Sort",
-		"Switch cards to show Media",
-		"Switch cards to hide Media",
-	} {
-		if strings.Contains(response.Markdown, unwanted) {
-			t.Fatalf("expected %q to be removed from card grid markdown", unwanted)
-		}
-	}
-
-	for _, expected := range []string{
-		"Engineering",
-		"From model to agent: Equipping the Responses API with a computer environment",
-		"Mar 11, 2026",
-		"Beyond rate limits: scaling access to Codex and Sora",
-		"Feb 13, 2026",
-	} {
-		if !strings.Contains(response.Markdown, expected) {
-			t.Fatalf("expected %q to remain in card grid markdown", expected)
-		}
+func TestProcessRegressionCorpus(t *testing.T) {
+	for _, fixture := range processRegressionFixtures {
+		fixture := fixture
+		t.Run(fixture.name, func(t *testing.T) {
+			response, err := Process(model.Request{
+				URL:  fixture.url,
+				HTML: loadFixture(t, fixture.fixture),
+			})
+			if err != nil {
+				t.Fatalf("process regression fixture: %v", err)
+			}
+			if response.Quality.FallbackUsed && !fixture.allowFallback {
+				t.Fatal("unexpected fallback for regression fixture")
+			}
+			for _, expected := range fixture.expected {
+				if !strings.Contains(response.Markdown, expected) {
+					t.Fatalf("expected %q to remain in regression output", expected)
+				}
+			}
+			for _, unwanted := range fixture.unwanted {
+				if strings.Contains(response.Markdown, unwanted) {
+					t.Fatalf("expected %q to be removed from regression output", unwanted)
+				}
+			}
+			if fixture.firstNonEmpty != "" {
+				if got := firstNonEmptyLine(response.Markdown); got != fixture.firstNonEmpty {
+					t.Fatalf("expected first output line %q, got %q", fixture.firstNonEmpty, got)
+				}
+			}
+		})
 	}
 }
 
-func TestProcessPreservesJobDetailSignals(t *testing.T) {
-	response, err := Process(model.Request{
-		URL:  "https://jobs.ashbyhq.com/openai/example/application",
-		HTML: loadFixture(t, "regression/job_detail.html"),
-	})
-	if err != nil {
-		t.Fatalf("process failed: %v", err)
+func TestProcessFixtureCorpusIsFullyClassified(t *testing.T) {
+	coreFixtures := make([]string, 0, len(processGoldenFixtures))
+	coreGoldens := make([]string, 0, len(processGoldenFixtures))
+	for _, fixture := range processGoldenFixtures {
+		coreFixtures = append(coreFixtures, filepath.Base(fixture.fixture))
+		coreGoldens = append(coreGoldens, filepath.Base(fixture.golden))
 	}
 
-	if response.Quality.FallbackUsed {
-		t.Fatalf("did not expect fallback for job detail fixture")
+	regressionFixtures := make([]string, 0, len(processRegressionFixtures)+len(processExactRegressionFixtures))
+	for _, fixture := range processRegressionFixtures {
+		regressionFixtures = append(regressionFixtures, filepath.Base(fixture.fixture))
 	}
-	for _, expected := range []string{
-		"Abuse Investigator",
-		"San Francisco; Remote - US",
-		"$288K – $425K • Offers Equity",
-	} {
-		if !strings.Contains(response.Markdown, expected) {
-			t.Fatalf("expected %q to remain in job detail markdown", expected)
+	regressionGoldens := make([]string, 0, len(processExactRegressionFixtures))
+	for _, fixture := range processExactRegressionFixtures {
+		regressionFixtures = append(regressionFixtures, filepath.Base(fixture.fixture))
+		regressionGoldens = append(regressionGoldens, filepath.Base(fixture.golden))
+	}
+
+	assertCorpusFiles(t, filepath.Join(testutil.RepoRoot(t), "testdata", "fixtures", "core"), ".html", coreFixtures)
+	assertCorpusFiles(t, filepath.Join(testutil.RepoRoot(t), "testdata", "golden", "core"), ".md", coreGoldens)
+	assertCorpusFiles(t, filepath.Join(testutil.RepoRoot(t), "testdata", "fixtures", "regression"), ".html", regressionFixtures)
+	assertCorpusFiles(t, filepath.Join(testutil.RepoRoot(t), "testdata", "golden", "regression"), ".md", regressionGoldens)
+}
+
+func assertCorpusFiles(t testing.TB, directory, extension string, expected []string) {
+	t.Helper()
+	entries, err := os.ReadDir(directory)
+	if err != nil {
+		t.Fatalf("read fixture corpus %q: %v", directory, err)
+	}
+	actual := make([]string, 0, len(entries))
+	for _, entry := range entries {
+		if !entry.IsDir() && filepath.Ext(entry.Name()) == extension {
+			actual = append(actual, entry.Name())
 		}
+	}
+	sort.Strings(actual)
+	sort.Strings(expected)
+	if strings.Join(actual, "\n") != strings.Join(expected, "\n") {
+		t.Fatalf("fixture corpus mismatch in %s\nactual:\n%s\n\nexpected:\n%s", directory, strings.Join(actual, "\n"), strings.Join(expected, "\n"))
 	}
 }
 
-func TestProcessSuppressesShellHeavyBlogChrome(t *testing.T) {
+func TestProcessFallbackPreservesCanonicalMarkdown(t *testing.T) {
 	response, err := Process(model.Request{
-		URL:  "https://developers.openai.com/blog",
-		HTML: loadFixture(t, "regression/openai_blog_shell.html"),
+		URL:  "https://example.com/native-fallback",
+		HTML: `<html><body><aside><p>This is the actual content.</p><hr><p>It lives in an aside.</p></aside></body></html>`,
+		Options: model.Options{
+			OnlyMainContent: model.Bool(true),
+		},
 	})
 	if err != nil {
 		t.Fatalf("process failed: %v", err)
 	}
-	if response.Quality.FallbackUsed {
-		t.Fatalf("did not expect fallback for shell-heavy blog fixture")
+	if !response.Quality.FallbackUsed {
+		t.Fatal("expected fallback to be used")
 	}
-
-	for _, unwanted := range []string{"Search the blog", "Search docs", "Primary navigation", "{{ className }}"} {
-		if strings.Contains(response.Markdown, unwanted) {
-			t.Fatalf("expected %q to be removed from blog markdown", unwanted)
-		}
-	}
-	if !strings.Contains(response.Markdown, "Launch notes for the Responses API") {
-		t.Fatalf("expected blog content to remain")
+	if !strings.Contains(response.Markdown, "---") || strings.Contains(response.Markdown, "* * *") {
+		t.Fatalf("expected fallback to preserve Native thematic-break output:\n%s", response.Markdown)
 	}
 }
 
-func TestProcessSuppressesShellHeavyRepoChrome(t *testing.T) {
-	response, err := Process(model.Request{
-		URL:  "https://github.com/zellij-org/zellij",
-		HTML: loadFixture(t, "regression/github_repo_shell.html"),
-	})
-	if err != nil {
-		t.Fatalf("process failed: %v", err)
-	}
-	if response.Quality.FallbackUsed {
-		t.Fatalf("did not expect fallback for shell-heavy repo fixture")
-	}
-
-	for _, unwanted := range []string{
-		"Skip to content",
-		"You signed in with another tab or window",
-		"Dismiss alert",
-		"{{ className }}",
-		"Uh oh!",
-		"Please reload this page",
-		"Repository files navigation",
-	} {
-		if strings.Contains(response.Markdown, unwanted) {
-			t.Fatalf("expected %q to be removed from repo markdown", unwanted)
-		}
-	}
-	if !strings.Contains(response.Markdown, "A terminal workspace with batteries included.") {
-		t.Fatalf("expected repository summary to remain")
+func TestProcessContextHonorsCancellation(t *testing.T) {
+	ctx, cancel := context.WithCancel(context.Background())
+	cancel()
+	_, err := ProcessContext(ctx, model.Request{HTML: `<p>Hello</p>`})
+	if !errors.Is(err, context.Canceled) {
+		t.Fatalf("expected context cancellation, got %v", err)
 	}
 }
 
-func TestProcessRetainsDiscussionFixtureCoreSignals(t *testing.T) {
+func TestProcessUsesNativeConversion(t *testing.T) {
 	response, err := Process(model.Request{
-		URL:  "https://stackoverflow.com/questions/1732348/regex-match-open-tags-except-xhtml-self-contained-tags",
-		HTML: loadFixture(t, "regression/stackoverflow_question_thread.html"),
+		URL:  "https://example.com/native",
+		HTML: `<html><body><article><h1>Native Engine</h1><p>Hello <strong>world</strong>.</p></article></body></html>`,
+		Options: model.Options{
+			OnlyMainContent: model.Bool(false),
+		},
 	})
 	if err != nil {
 		t.Fatalf("process failed: %v", err)
 	}
-
-	for _, unwanted := range []string{
-		"Collectives™ on Stack Overflow",
-		"Find centralized, trusted content",
-		"Knowledge at work",
-		"[Share](",
-		"Improve this question",
-		"Reset to default",
-	} {
-		if strings.Contains(response.Markdown, unwanted) {
-			t.Fatalf("expected %q to be removed from discussion fixture", unwanted)
-		}
-	}
-
-	for _, expected := range []string{
-		"I need to match all of these opening tags:",
-		"36 Answers",
-		"You can't parse \\[X\\]HTML with regex.",
-	} {
-		if !strings.Contains(response.Markdown, expected) {
-			t.Fatalf("expected %q to remain in discussion fixture markdown", expected)
-		}
-	}
-
-	firstNonEmpty := firstNonEmptyLine(response.Markdown)
-	if firstNonEmpty != "I need to match all of these opening tags:" {
-		t.Fatalf("expected discussion fixture to open on question body, got %q", firstNonEmpty)
-	}
-}
-
-func TestProcessRetainsTimelineFixtureCoreSignals(t *testing.T) {
-	response, err := Process(model.Request{
-		URL:  "https://github.com/microsoft/vscode/issues/286040",
-		HTML: loadFixture(t, "regression/github_issue_timeline.html"),
-	})
-	if err != nil {
-		t.Fatalf("process failed: %v", err)
-	}
-
-	for _, unwanted := range []string{
-		"Skip to content",
-		"You signed in with another tab or window",
-		"Dismiss alert",
-		"[New issue](",
-	} {
-		if strings.Contains(response.Markdown, unwanted) {
-			t.Fatalf("expected %q to be removed from timeline fixture", unwanted)
-		}
-	}
-
-	for _, expected := range []string{
-		"Iteration Plan for January 2026",
-		"# Iteration Plan for January 2026\\#286040",
-		"Closed",
-	} {
-		if !strings.Contains(response.Markdown, expected) {
-			t.Fatalf("expected %q to remain in timeline fixture markdown", expected)
-		}
-	}
-
-	firstNonEmpty := firstNonEmptyLine(response.Markdown)
-	if firstNonEmpty != "# Iteration Plan for January 2026\\#286040" {
-		t.Fatalf("expected timeline fixture to open on the issue title, got %q", firstNonEmpty)
-	}
-	if strings.Contains(response.Markdown, "[Iteration Plan for January 2026](https://github.com/microsoft/vscode/issues/286040#top)#286040") {
-		t.Fatalf("expected redundant title echo to be removed from timeline fixture")
+	if response.Markdown != "# Native Engine\n\nHello **world**." {
+		t.Fatalf("unexpected native markdown:\n%s", response.Markdown)
 	}
 }
 

@@ -1,0 +1,41 @@
+<!doctype html>
+<html lang="en">
+<head><title>Native semantic structures</title></head>
+<body>
+  <article>
+    <react-app>
+      <issue-view>
+        <h1>Semantic Structures</h1>
+        <dl>
+          <dt>Term</dt>
+          <dd>Definition</dd>
+          <dt>Other</dt>
+          <dd>Second definition</dd>
+        </dl>
+        <a href="/cards/one">
+          <h2>Linked Card</h2>
+          <p>Card body.</p>
+        </a>
+        <ol reversed>
+          <li>Three</li>
+          <li value="7">Seven</li>
+          <li>Six</li>
+        </ol>
+        <blockquote>
+          <p>Quoted code:</p>
+          <pre><code>return 1 &lt; 2;</code></pre>
+        </blockquote>
+        <pre><code class="language-go"><div class="highlight"><span class="keyword">func</span> <span class="function">main</span>() {}</div></code></pre>
+        <details open>
+          <summary>Additional context</summary>
+          <p>Expanded explanation.</p>
+        </details>
+        <figure>
+          <img src="/images/architecture.jpg" srcset="/images/architecture.jpg 1x, /images/architecture@2x.jpg 2x" alt="Architecture diagram">
+          <figcaption>System overview</figcaption>
+        </figure>
+      </issue-view>
+    </react-app>
+  </article>
+</body>
+</html>
