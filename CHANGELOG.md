@@ -2,6 +2,33 @@
 
 All notable changes to `markmaton` will be documented in this file.
 
+## [0.1.8] - 2026-08-03
+
+### Added
+
+- an independent Native DOM-to-IR-to-Markdown converter with deterministic rendering, cancellation, typed limits, immutable document transforms, and malformed-input safety
+- project-owned CommonMark, GFM, real-world, product-regression, and large performance corpora with exact Markmaton Goldens and retained semantic references
+- safe URL policy enforcement for links, images, media sources, `srcset`, and document base URLs
+- readable iframe, video, and audio link preservation without network-dependent plugins
+
+### Changed
+
+- Native is now the only production conversion path; conversion cleanup policies are applied directly around the Native converter
+- regression fixtures, Goldens, performance inputs, and provenance are organized under Markmaton's `testdata/fixtures` and `testdata/golden` taxonomy
+- CI now runs the large performance corpus, `go vet`, a CGO-free production build, and the local CLI smoke path
+- benchmark guidance now uses cached HTML and project-owned regressions instead of requiring a local reference service
+
+### Fixed
+
+- block structure inside custom elements and links, definition-list separation, reversed and explicitly numbered lists, quoted fenced code, and nested syntax-highlighter markup
+- unsafe `javascript:`, `data:`, and `vbscript:` destinations leaking into Markdown, cleaned HTML, links, or images
+- meaningful opening links being mistaken for repository chrome and removed by Markdown cleanup
+- audio and video `<source>` elements being classified as images
+
+### Removed
+
+- the Legacy converter, Firecrawl runtime dependency, Builder/Hook/Plugin compatibility layer, and obsolete migration-only planning records
+
 ## [0.1.7] - 2026-04-13
 
 ### Changed
