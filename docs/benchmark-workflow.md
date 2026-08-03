@@ -1,219 +1,127 @@
-# Benchmark Workflow
+# Benchmark and Regression Workflow
 
 ## Purpose
 
-This workflow exists to keep `markmaton` general.
+Benchmarking exists to improve Markmaton by reusable page pattern, not by site-specific patching. The workflow separates exploratory page captures from durable automated regression coverage.
 
-We do **not** want to tune the parser against one attractive page at a time.
-We want a repeatable benchmark loop that:
+## Working directories
 
-- samples real pages
-- caches their HTML locally
-- compares Firecrawl and `markmaton` behaviorally
-- attributes gaps to the correct parser layer
-- promotes only representative pages into long-term regression fixtures
-
-## Comparison standard
-
-Benchmark comparisons are **behavioral**, not byte-for-byte Markdown comparisons.
-
-For each page, compare:
-
-- title quality
-- main content retention
-- shell/chrome leakage
-- card/list readability
-- metadata quality
-- link and image normalization
-- quality-score honesty
-- whether fallback was required
-
-Do **not** treat Firecrawl output as the exact formatting target.
-Use it as a mature reference point for behavior.
-
-## HTML acquisition rules
-
-Pick the HTML mode before comparing parser quality.
-
-### Use fetched HTML first for:
-
-- traditional article pages
-- wiki pages
-- docs pages that are largely server-rendered
-- forums/discussion pages that render meaningful HTML without client hydration
-
-### Use rendered HTML first for:
-
-- app-shell pages
-- modern marketing/product pages
-- job applications and multi-step forms
-- card/list pages driven by client UI
-- heavy media pages with client-side personalization or shell logic
-
-If a fetched page is obviously incomplete or blocked, promote the page to rendered-first.
-
-## Local benchmark cache layout
-
-Cache all benchmark work under:
-
-```text
-tmp/benchmarks/<slug>/
-```
-
-Recommended contents:
+Keep exploratory captures outside the committed corpus:
 
 ```text
 tmp/benchmarks/<slug>/
   manifest.md
   fetched.html
   rendered.html
-  firecrawl-scrape.json
-  markmaton.json
+  baseline.json
+  candidate.json
   notes.md
 ```
 
-Rules:
+The `tmp/` tree is local-only. Commit a page only after it has exposed a repeatable parser failure.
 
-- cache locally first
-- do not add live network tests to the automated suite
-- do not commit cached benchmark runs
-- only promote a page into `testdata/fixtures/regression/` if it exposes a reusable parser failure mode
+## Capture rules
 
-## Sampling procedure
-
-### 1. Capture page metadata
+Use fetched HTML for server-rendered articles, documentation, wikis, and conventional discussion pages. Use rendered HTML for app shells, client-driven lists, job applications, media-heavy pages, and pages whose fetched HTML lacks the visible content.
 
 Record:
 
-- canonical URL
+- source URL
+- capture method
 - page class
-- chosen HTML mode
-- why that HTML mode was chosen
+- whether the input is fetched or rendered
+- the parser behavior under investigation
+- any privacy or licensing cleanup applied before promotion
 
-### 2. Capture HTML
+## Evaluation loop
 
-Use one or both:
+### 1. Capture stable HTML
 
-- fetched HTML
-- rendered HTML
-
-When using Playwright-rendered HTML, save the raw browser result and, if needed, decode it into a plain `.html` artifact before running `markmaton`.
-
-### 3. Run Firecrawl `/v2/scrape`
-
-Use local Firecrawl as the reference scrape implementation.
-
-Example:
+Use a browser or fetch layer outside Markmaton. The bundled skill can capture rendered HTML:
 
 ```bash
-curl -sS -X POST http://localhost:3002/v2/scrape \
-  -H 'Content-Type: application/json' \
-  --data '{"url":"https://example.com","formats":["markdown"]}'
+uv run python skills/html-to-markdown/scripts/capture_html.py \
+  https://example.com \
+  --output-format html \
+  > tmp/benchmarks/example/rendered.html
 ```
 
-Store the full JSON response in:
+Never add live-network requests to the automated parser suite.
 
-```text
-tmp/benchmarks/<slug>/firecrawl-scrape.json
-```
-
-### 4. Run `markmaton`
-
-Use cached HTML, not the live page.
-
-Example:
+### 2. Run the current engine
 
 ```bash
 uv run python -m markmaton.cli convert \
-  --html-file tmp/benchmarks/<slug>/rendered.html \
+  --html-file tmp/benchmarks/example/rendered.html \
   --url https://example.com \
-  --output-format json
+  --output-format json \
+  > tmp/benchmarks/example/candidate.json
 ```
 
-Store the output in:
+Compare against the last known-good Markmaton output when one exists. External converters may provide research context, but they are not an executable oracle or a required local dependency.
 
-```text
-tmp/benchmarks/<slug>/markmaton.json
+### 3. Attribute the gap
+
+Use the narrowest responsible layer:
+
+- `cleanhtml` — shell, dialogs, navigation, hidden content, or wrong main-content scope
+- `resolve` / `safeurl` — relative URLs, `srcset`, media destinations, or unsafe schemes
+- `convert/native` — block structure, inline structure, lists, tables, code, links, images, or media
+- conversion policies — generic control lines, duplicate opening content, or low-risk Markdown cleanup
+- `postprocess` — final spacing and formatting normalization
+- `metadata`, `links`, `images` — extraction-specific defects
+- `quality` — misleading scores or fallback decisions
+
+### 4. Minimize before promotion
+
+Prefer a small synthetic fixture when it reproduces the failure. Preserve a real-world snapshot only when surrounding DOM structure is essential and cannot be represented faithfully by a minimized sample.
+
+Remove unrelated scripts, personal data, volatile tokens, and irrelevant page content when doing so does not destroy the failure mode.
+
+## Promotion destinations
+
+- `testdata/fixtures/regression/` and `testdata/golden/regression/` for Markmaton-owned end-to-end failures
+- `testdata/fixtures/compatibility/` and `testdata/golden/compatibility/` for reusable HTML-to-Markdown contract coverage
+- `testdata/fixtures/performance/` for deterministic large inputs
+
+Every promoted file must be declared by the corresponding manifest or engine fixture table. Orphan detection is part of the automated suite.
+
+## Golden policy
+
+Use exact Goldens for deterministic Markmaton output. Use semantic comparison only for an external historical reference, never as a substitute for Markmaton's own exact `expected.md`.
+
+Refresh conversion Goldens only after reviewing the renderer change:
+
+```bash
+MARKMATON_UPDATE_CONVERSION_GOLDENS=1 \
+  go test ./internal/convert -run '^TestConversionCorpus$' -count=1
 ```
 
-### 5. Write findings
+## Promotion criteria
 
-For each page, summarize:
+Promote a case only when it:
 
-- what Firecrawl got right
-- what `markmaton` got right
-- the biggest gap
-- the likely parser layer responsible
-- whether the page should become a regression fixture
+- represents a reusable parser pattern
+- protects content that could otherwise be silently lost or corrupted
+- adds behavior not already covered by a smaller fixture
+- is deterministic and network-independent
+- has a clear expected result or explicit behavioral assertions
 
-## Gap attribution rules
+Do not promote a page merely because it is prominent, visually complex, or currently popular.
 
-Use the narrowest responsible layer.
+## Verification
 
-### `cleanhtml`
+Run the normal suite after every promotion:
 
-Use when the issue is:
+```bash
+go test ./...
+go vet ./...
+uv run python -m unittest discover -s tests -p 'test_*.py'
+```
 
-- navigation, dialogs, alerts, overlays, banners, or shell residue
-- body chrome surviving into Markdown
-- obvious main-content mis-scoping
+Run the large corpus explicitly when conversion or rendering behavior changes:
 
-### `postprocess`
-
-Use when the issue is:
-
-- generic list controls surviving
-- card entries needing spacing or separation
-- label/date or metadata collisions
-- low-risk Markdown cleanup after good conversion
-
-### `convert/core`
-
-Use when the issue remains after clean input and cannot be fixed cleanly in postprocess:
-
-- block structure is awkward
-- lists/tables/timelines collapse badly
-- links/images are wrapped in persistently poor shapes
-- the same structural problem appears across multiple sites
-
-### `quality`
-
-Use when the output is produced, but the scoring or fallback guidance is misleading.
-
-## Promotion rules
-
-Promote a page into `testdata/fixtures/regression/` only if all are true:
-
-- it exposes a reusable parser pattern
-- the failure is likely to recur on other sites
-- a local synthetic fixture would miss the important structure
-- the page adds coverage that current fixtures do not already provide
-
-Do **not** promote pages just because they are interesting or high-profile.
-
-## Initial benchmark classes
-
-The benchmark set should cover:
-
-- article
-- docs
-- wiki
-- card/list grid
-- careers landing
-- job listing
-- job detail / application form
-- thread/discussion
-- repo/app shell
-- issue/pr timeline
-- product/commerce page
-
-## Exit criteria for a benchmark round
-
-A benchmark round is complete when:
-
-- each selected page has a cached HTML source
-- each selected page has a Firecrawl scrape snapshot
-- each selected page has a `markmaton` output snapshot
-- each page has a gap attribution
-- each page has a promotion decision
-- the next parser slice is grouped by parser layer, not by site name
+```bash
+MARKMATON_RUN_LARGE_CORPUS=1 \
+  go test ./internal/convert/native -run '^TestLargePerformanceCorpus$' -count=1
+```

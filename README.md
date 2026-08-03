@@ -94,7 +94,7 @@ JSON mode returns `markdown`, `html_clean`, `metadata`, `links`, `images`, and `
 - Go engine: `cmd/markmaton-engine`
 - Python wrapper and CLI: `markmaton/`
 - Parser fixtures and golden files: `testdata/`
-- Research, benchmark, and release docs: `docs/`
+- Architecture, benchmark, and release docs: `docs/`
 
 ## Documentation
 
@@ -102,8 +102,8 @@ JSON mode returns `markdown`, `html_clean`, `metadata`, `links`, `images`, and `
 - [Usage guide](docs/usage.md)
 - [Packaging layout](docs/packaging-layout.md)
 - [PyPI release path](docs/pypi-release.md)
-- [Benchmark workflow](docs/benchmark-workflow.md)
-- [Benchmark matrix](docs/benchmark-matrix.md)
+- [Benchmark and regression workflow](docs/benchmark-workflow.md)
+- [Regression corpus](testdata/README.md)
 - [AI agent skill](skills/html-to-markdown/SKILL.md) — for using `markmaton` inside an agent workflow
 
 ## Development
