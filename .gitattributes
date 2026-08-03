@@ -1,0 +1,4 @@
+# Raw HTML conversion and performance fixtures intentionally preserve source
+# whitespace because indentation and boundary spaces are part of the input.
+testdata/fixtures/compatibility/** -whitespace
+testdata/fixtures/performance/** -whitespace

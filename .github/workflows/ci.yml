@@ -31,10 +31,20 @@ jobs:
       - name: Run Go tests
         run: go test ./...
 
+      - name: Run large performance corpus
+        env:
+          MARKMATON_RUN_LARGE_CORPUS: "1"
+        run: go test ./internal/convert/native -run '^TestLargePerformanceCorpus$' -count=1
+
+      - name: Run Go vet
+        run: go vet ./...
+
       - name: Run Python unit tests
         run: uv run python -m unittest discover -s tests -p 'test_*.py'
 
       - name: Build local engine binary
+        env:
+          CGO_ENABLED: "0"
         run: |
           mkdir -p bin
           go build -o bin/markmaton-engine ./cmd/markmaton-engine
