@@ -1,0 +1,325 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>markmaton — HTML in. Markdown out.</title>
+  <meta name="description" content="markmaton is a lightweight HTML-to-Markdown parser core for agent workflows. Feed it page HTML — get back clean Markdown, metadata, links, images, and quality signals." />
+  <meta name="theme-color" content="#14304A" />
+  <meta property="og:title" content="markmaton — HTML in. Markdown out." />
+  <meta property="og:description" content="A lightweight parser core that strips page chrome and returns clean Markdown, metadata, and quality signals. Built for agent workflows." />
+  <meta property="og:type" content="website" />
+  <meta property="og:url" content="https://appautomaton.renocrypt.com/markmaton/" />
+  <meta property="og:image" content="https://appautomaton.renocrypt.com/markmaton/og-image.png" />
+  <link rel="icon" type="image/svg+xml" href="favicon.svg" />
+  <link rel="preconnect" href="https://api.fontshare.com" crossorigin />
+  <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin />
+  <link href="https://api.fontshare.com/v2/css?f[]=clash-display@500,600&f[]=general-sans@400,500,600&display=swap" rel="stylesheet" />
+  <link href="https://cdn.jsdelivr.net/npm/@fontsource/commit-mono@5.3.0/index.css" rel="stylesheet" />
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+
+  <svg width="0" height="0" style="position:absolute" aria-hidden="true">
+    <defs>
+      <!-- Brand mark: hash struck by a signal slash — noise removed, content kept -->
+      <symbol id="i-mark" viewBox="0 0 32 32">
+        <rect x="1" y="1" width="30" height="30" fill="none" stroke="currentColor" stroke-width="1.5"/>
+        <path d="M13 9v14M19 9v14M9.5 13.5h13M9.5 18.5h13" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+        <path class="mark-slash" d="M8 24L24 8" fill="none" stroke="#FF5A1F" stroke-width="2.2" stroke-linecap="round"/>
+      </symbol>
+      <!-- Source control: three nodes on branching paths, dimension tick -->
+      <symbol id="i-git" viewBox="0 0 24 24">
+        <circle cx="7" cy="6" r="2.4" fill="none" stroke="currentColor" stroke-width="1.5"/>
+        <circle cx="7" cy="18" r="2.4" fill="none" stroke="currentColor" stroke-width="1.5"/>
+        <circle cx="17" cy="10" r="2.4" fill="none" stroke="currentColor" stroke-width="1.5"/>
+        <path d="M7 8.4v7.2M7 8.4c0 4 6.5 1.2 7.6-.6" fill="none" stroke="currentColor" stroke-width="1.5"/>
+        <path class="tick" d="M15.5 15.5h5M17.75 14v3" stroke="currentColor" stroke-width="1.3"/>
+      </symbol>
+      <!-- Package crate with dimension marks -->
+      <symbol id="i-crate" viewBox="0 0 24 24">
+        <path d="M4 8.5L12 4l8 4.5v7L12 20l-8-4.5v-7z" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/>
+        <path d="M4 8.5L12 13l8-4.5M12 13v7" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/>
+        <path class="tick" d="M8 2.5h8M12 1v3" stroke="currentColor" stroke-width="1.2"/>
+      </symbol>
+      <!-- Sheet with folded corner -->
+      <symbol id="i-sheet" viewBox="0 0 24 24">
+        <path d="M6 3h8l4 4v14H6V3z" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/>
+        <path d="M14 3v4h4" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/>
+        <path d="M9 11h6M9 14.5h6M9 18h4" stroke="currentColor" stroke-width="1.3"/>
+      </symbol>
+      <!-- Copy: two overlapping sheets -->
+      <symbol id="i-copy" viewBox="0 0 24 24">
+        <rect x="8.5" y="8.5" width="11" height="12" rx="1" fill="none" stroke="currentColor" stroke-width="1.5"/>
+        <path d="M15.5 8.5v-3a2 2 0 0 0-2-2h-8a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h3" fill="none" stroke="currentColor" stroke-width="1.5"/>
+      </symbol>
+      <!-- Check tick -->
+      <symbol id="i-check" viewBox="0 0 24 24">
+        <path d="M4.5 12.5l5 5L19.5 7" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+      </symbol>
+      <!-- Replay: dimension dial with arrow -->
+      <symbol id="i-cycle" viewBox="0 0 24 24">
+        <path d="M19 12a7 7 0 1 1-2.05-4.95" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+        <path d="M17 3.5v3.8h3.8" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+        <path class="tick" d="M12 8v1.6M16 12h-1.6M12 16v-1.6M8 12h1.6" stroke="currentColor" stroke-width="1.1"/>
+      </symbol>
+      <!-- Dimension arrow (flow) -->
+      <symbol id="i-flow" viewBox="0 0 64 24">
+        <path class="flow-line" d="M2 12h56" stroke="currentColor" stroke-width="1.5" stroke-dasharray="4 5"/>
+        <path d="M52 5.5L60 12l-8 6.5" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+        <path d="M2 8v8" stroke="currentColor" stroke-width="1.5"/>
+      </symbol>
+    </defs>
+  </svg>
+
+  <header class="head">
+    <a class="brand" href="https://appautomaton.github.io/markmaton/">
+      <svg class="brand-mark" aria-hidden="true"><use href="#i-mark"/></svg>
+      <span class="brand-word">markmaton</span>
+    </a>
+    <nav class="head-nav" aria-label="Project links">
+      <a href="https://github.com/appautomaton/markmaton"><svg aria-hidden="true"><use href="#i-git"/></svg><span>GitHub</span></a>
+      <a href="https://pypi.org/project/markmaton/"><svg aria-hidden="true"><use href="#i-crate"/></svg><span>PyPI</span></a>
+      <a href="https://github.com/appautomaton/markmaton/tree/main/docs"><svg aria-hidden="true"><use href="#i-sheet"/></svg><span>Docs</span></a>
+    </nav>
+    <span class="stamp head-stamp">REV 0.1.8</span>
+  </header>
+
+  <main>
+
+    <!-- ============ SHEET 01 · CONVERSION ============ -->
+    <section class="hero" aria-labelledby="hero-title">
+      <p class="eyebrow"><span class="eyebrow-tick"></span>HTML→MARKDOWN PARSER CORE<span class="eyebrow-tick"></span></p>
+      <h1 id="hero-title">HTML in.<br />Markdown out.</h1>
+      <p class="lede">
+        <code>markmaton</code> is a lightweight parser core for agent workflows.
+        Feed it page HTML from your fetcher or browser — get back clean Markdown,
+        metadata, links, images, and quality signals.
+      </p>
+      <div class="cta-row">
+        <a class="btn btn-primary" href="https://pypi.org/project/markmaton/">
+          <svg aria-hidden="true"><use href="#i-crate"/></svg>Install from PyPI
+        </a>
+        <a class="btn btn-ghost" href="https://github.com/appautomaton/markmaton">
+          <svg aria-hidden="true"><use href="#i-git"/></svg>View on GitHub
+        </a>
+      </div>
+
+      <figure class="theater" aria-label="Demonstration: noisy HTML converted to clean Markdown">
+        <figcaption class="theater-bar">
+          <span class="stamp">FIG 1.0 — CONVERSION</span>
+          <button class="replay" type="button" aria-label="Replay the conversion">
+            <svg aria-hidden="true"><use href="#i-cycle"/></svg><span>Replay</span>
+          </button>
+        </figcaption>
+        <div class="theater-stage">
+          <div class="panel panel-html">
+            <p class="panel-label">page.html <span class="panel-note">— abridged</span></p>
+            <pre class="code"><code><span class="p">&lt;</span><span class="t">html</span> <span class="a">lang</span>=<span class="s">"en"</span><span class="p">&gt;</span>
+  <span class="p">&lt;</span><span class="t">head</span><span class="p">&gt;</span>
+    <span class="p">&lt;</span><span class="t">title</span><span class="p">&gt;</span>Shipping Faster With Queues<span class="p">&lt;/</span><span class="t">title</span><span class="p">&gt;</span>
+    <span class="p">&lt;</span><span class="t">meta</span> <span class="a">name</span>=<span class="s">"description"</span> <span class="a">content</span>=<span class="s">"How Acme…"</span> <span class="p">/&gt;</span>
+  <span class="p">&lt;/</span><span class="t">head</span><span class="p">&gt;</span>
+  <span class="p">&lt;</span><span class="t">body</span><span class="p">&gt;</span>
+<span class="noise" data-n="1">    <span class="p">&lt;</span><span class="t">header</span><span class="p">&gt;&lt;</span><span class="t">nav</span><span class="p">&gt;&lt;</span><span class="t">a</span> <span class="a">href</span>=<span class="s">"/"</span><span class="p">&gt;</span>Acme<span class="p">&lt;/</span><span class="t">a</span><span class="p">&gt;</span> … <span class="p">&lt;/</span><span class="t">nav</span><span class="p">&gt;&lt;/</span><span class="t">header</span><span class="p">&gt;</span></span>
+<span class="noise" data-n="2">    <span class="p">&lt;</span><span class="t">div</span> <span class="a">class</span>=<span class="s">"cookie-banner"</span><span class="p">&gt;</span>We use cookies. … <span class="p">&lt;/</span><span class="t">div</span><span class="p">&gt;</span></span>
+    <span class="p">&lt;</span><span class="t">main</span><span class="p">&gt;</span>
+      <span class="p">&lt;</span><span class="t">article</span><span class="p">&gt;</span>
+        <span class="p">&lt;</span><span class="t">h1</span><span class="p">&gt;</span>Shipping Faster With Queues<span class="p">&lt;/</span><span class="t">h1</span><span class="p">&gt;</span>
+        <span class="p">&lt;</span><span class="t">p</span><span class="p">&gt;</span>We cut p95 job latency by 60% …<span class="p">&lt;/</span><span class="t">p</span><span class="p">&gt;</span>
+        <span class="p">&lt;</span><span class="t">p</span><span class="p">&gt;</span>The full breakdown is in our
+           <span class="p">&lt;</span><span class="t">a</span> <span class="a">href</span>=<span class="s">"/posts/queue-first-design"</span><span class="p">&gt;</span>post<span class="p">&lt;/</span><span class="t">a</span><span class="p">&gt;</span>.<span class="p">&lt;/</span><span class="t">p</span><span class="p">&gt;</span>
+        <span class="p">&lt;</span><span class="t">pre</span><span class="p">&gt;&lt;</span><span class="t">code</span> <span class="a">class</span>=<span class="s">"language-python"</span><span class="p">&gt;</span>…<span class="p">&lt;/</span><span class="t">code</span><span class="p">&gt;&lt;/</span><span class="t">pre</span><span class="p">&gt;</span>
+        <span class="p">&lt;</span><span class="t">img</span> <span class="a">srcset</span>=<span class="s">"… latency-chart.png 2x"</span> <span class="p">/&gt;</span>
+      <span class="p">&lt;/</span><span class="t">article</span><span class="p">&gt;</span>
+<span class="noise" data-n="3">      <span class="p">&lt;</span><span class="t">aside</span> <span class="a">class</span>=<span class="s">"related"</span><span class="p">&gt;&lt;</span><span class="t">a</span> <span class="a">href</span>=<span class="s">"/posts/retry-storms"</span><span class="p">&gt;</span>…<span class="p">&lt;/</span><span class="t">aside</span><span class="p">&gt;</span></span>
+    <span class="p">&lt;/</span><span class="t">main</span><span class="p">&gt;</span>
+<span class="noise" data-n="4">    <span class="p">&lt;</span><span class="t">footer</span><span class="p">&gt;</span>© 2026 Acme Corp<span class="p">&lt;/</span><span class="t">footer</span><span class="p">&gt;</span></span>
+<span class="noise" data-n="5">    <span class="p">&lt;</span><span class="t">script</span><span class="p">&gt;</span>window.analytics.track("pageview");<span class="p">&lt;/</span><span class="t">script</span><span class="p">&gt;</span></span>
+  <span class="p">&lt;/</span><span class="t">body</span><span class="p">&gt;</span>
+<span class="p">&lt;/</span><span class="t">html</span><span class="p">&gt;</span></code></pre>
+          </div>
+
+          <div class="convert-chip" aria-hidden="true">
+            <span class="convert-cmd">markmaton convert</span>
+            <svg class="convert-arrow"><use href="#i-flow"/></svg>
+          </div>
+
+          <div class="panel panel-md">
+            <p class="panel-label">page.md</p>
+            <pre class="code code-md"><code><span class="md-line"><span class="md-h"># Shipping Faster With Queues</span></span>
+<span class="md-line">&nbsp;</span>
+<span class="md-line">We cut p95 job latency by 60% after moving</span>
+<span class="md-line">webhook delivery to a queue-first design.</span>
+<span class="md-line">&nbsp;</span>
+<span class="md-line">The full breakdown is in our</span>
+<span class="md-line"><span class="md-a">[queue-first design post](https://…)</span></span>
+<span class="md-line">&nbsp;</span>
+<span class="md-line"><span class="md-f">```python</span></span>
+<span class="md-line"><span class="md-f">def enqueue(job):</span></span>
+<span class="md-line"><span class="md-f">    queue.push(job, delay=backoff(…))</span></span>
+<span class="md-line"><span class="md-f">```</span></span>
+<span class="md-line">&nbsp;</span>
+<span class="md-line">![Latency chart](https://…latency-chart.png)</span></code></pre>
+          </div>
+        </div>
+        <p class="theater-legend"><span class="legend-strike" aria-hidden="true"></span>Struck lines are stripped before conversion. Links and images resolve against the page URL.</p>
+      </figure>
+    </section>
+
+    <div class="dim-rule" role="presentation"><span class="dim-label">100% DETERMINISTIC</span></div>
+
+    <!-- ============ SHEET 02 · PIPELINE ============ -->
+    <section class="sheet" id="pipeline" aria-labelledby="pipeline-title">
+      <p class="sheet-label"><span class="sheet-num">SHEET 02</span><span class="sheet-name">PIPELINE</span></p>
+      <h2 id="pipeline-title">The last mile of a web pipeline</h2>
+      <p class="sheet-lede">You already have a way to visit pages. <code>markmaton</code> is the step that turns what they return into something an agent can use.</p>
+      <div class="pipeline">
+        <div class="pipe-block">
+          <p class="pipe-title">Your fetcher</p>
+          <p class="pipe-sub">Playwright, fetch, Firecrawl — anything that returns HTML</p>
+        </div>
+        <svg class="pipe-arrow" aria-hidden="true"><use href="#i-flow"/></svg>
+        <div class="pipe-block pipe-core">
+          <p class="pipe-title"><svg class="mini-mark" aria-hidden="true"><use href="#i-mark"/></svg>markmaton</p>
+          <p class="pipe-sub">Strips chrome, converts, resolves, scores</p>
+        </div>
+        <svg class="pipe-arrow" aria-hidden="true"><use href="#i-flow"/></svg>
+        <div class="pipe-block">
+          <p class="pipe-title">Your agent</p>
+          <p class="pipe-sub">Clean Markdown, metadata, and a quality gate</p>
+        </div>
+      </div>
+      <p class="callout"><span class="callout-mark" aria-hidden="true">◧</span> A parser, not a crawler — no network, no browser control, no LLM calls.</p>
+    </section>
+
+    <div class="dim-rule" role="presentation"><span class="dim-label">ONE CALL · FULL SHEET</span></div>
+
+    <!-- ============ SHEET 03 · STRUCTURED OUTPUT ============ -->
+    <section class="sheet" id="output" aria-labelledby="output-title">
+      <p class="sheet-label"><span class="sheet-num">SHEET 03</span><span class="sheet-name">STRUCTURED OUTPUT</span></p>
+      <h2 id="output-title">More than Markdown</h2>
+      <p class="sheet-lede">JSON mode returns everything a pipeline needs to decide what to keep.</p>
+      <div class="output-grid">
+        <dl class="field-list">
+          <div class="field"><dt><code>markdown</code></dt><dd>Main content as clean Markdown.</dd></div>
+          <div class="field"><dt><code>html_clean</code></dt><dd>The distilled content HTML, links resolved.</dd></div>
+          <div class="field"><dt><code>metadata</code></dt><dd>Title, description, canonical URL, language, author.</dd></div>
+          <div class="field"><dt><code>links</code> · <code>images</code></dt><dd>Absolute URLs, resolved against the page URL.</dd></div>
+          <div class="field"><dt><code>quality</code></dt><dd>Counts and scores to gate downstream use.</dd></div>
+        </dl>
+        <div class="panel panel-json">
+          <p class="panel-label">response <span class="panel-note">— real output, trimmed</span></p>
+          <pre class="code"><code><span class="p">{</span>
+  <span class="a">"metadata"</span><span class="p">:</span> <span class="p">{</span>
+    <span class="a">"title"</span><span class="p">:</span> <span class="s">"Shipping Faster With Queues · Acme Engineering"</span><span class="p">,</span>
+    <span class="a">"language"</span><span class="p">:</span> <span class="s">"en"</span>
+  <span class="p">},</span>
+  <span class="a">"links"</span><span class="p">:</span> <span class="p">[</span><span class="s">"https://…/queue-first-design"</span><span class="p">],</span>
+  <span class="a">"images"</span><span class="p">:</span> <span class="p">[</span><span class="s">"https://…/latency-chart.png"</span><span class="p">],</span>
+  <span class="a">"quality"</span><span class="p">:</span> <span class="p">{</span>
+    <span class="a">"quality_score"</span><span class="p">:</span> <span class="n">0.7255</span><span class="p">,</span>
+    <span class="a">"link_density"</span><span class="p">:</span> <span class="n">0.004</span><span class="p">,</span>
+    <span class="a">"used_main_content"</span><span class="p">:</span> <span class="n">true</span>
+  <span class="p">}</span>
+<span class="p">}</span></code></pre>
+        </div>
+      </div>
+      <ul class="stat-row" aria-label="Example quality signals">
+        <li class="stat"><span class="stat-num">0.726</span><span class="stat-key">QUALITY SCORE</span></li>
+        <li class="stat"><span class="stat-num">0.004</span><span class="stat-key">LINK DENSITY</span></li>
+        <li class="stat"><span class="stat-num">251</span><span class="stat-key">TEXT LENGTH</span></li>
+        <li class="stat"><span class="stat-num">true</span><span class="stat-key">MAIN CONTENT</span></li>
+      </ul>
+    </section>
+
+    <div class="dim-rule" role="presentation"><span class="dim-label">SCALE 1:1</span></div>
+
+    <!-- ============ SHEET 04 · INSTALL ============ -->
+    <section class="sheet" id="install" aria-labelledby="install-title">
+      <p class="sheet-label"><span class="sheet-num">SHEET 04</span><span class="sheet-name">INSTALL</span></p>
+      <h2 id="install-title">Start parsing</h2>
+      <div class="install-grid">
+        <div class="install-block">
+          <p class="install-label">WITH PIP</p>
+          <div class="cmd-row">
+            <code class="cmd">pip install markmaton</code>
+            <button class="copy" type="button" data-copy="pip install markmaton" aria-label="Copy pip install command">
+              <svg class="ic-copy" aria-hidden="true"><use href="#i-copy"/></svg>
+              <svg class="ic-check" aria-hidden="true"><use href="#i-check"/></svg>
+            </button>
+          </div>
+        </div>
+        <div class="install-block">
+          <p class="install-label">WITH UV</p>
+          <div class="cmd-row">
+            <code class="cmd">uv tool install markmaton</code>
+            <button class="copy" type="button" data-copy="uv tool install markmaton" aria-label="Copy uv install command">
+              <svg class="ic-copy" aria-hidden="true"><use href="#i-copy"/></svg>
+              <svg class="ic-check" aria-hidden="true"><use href="#i-check"/></svg>
+            </button>
+          </div>
+        </div>
+        <div class="install-block install-wide">
+          <p class="install-label">CONVERT A PAGE</p>
+          <div class="cmd-row">
+            <code class="cmd">markmaton convert --html-file page.html --url https://example.com/article</code>
+            <button class="copy" type="button" data-copy="markmaton convert --html-file page.html --url https://example.com/article" aria-label="Copy convert command">
+              <svg class="ic-copy" aria-hidden="true"><use href="#i-copy"/></svg>
+              <svg class="ic-check" aria-hidden="true"><use href="#i-check"/></svg>
+            </button>
+          </div>
+        </div>
+      </div>
+      <p class="install-note">Python CLI and API around a fast Go engine. <a href="https://github.com/appautomaton/markmaton#quickstart">Quickstart and Python API</a> in the README.</p>
+    </section>
+
+    <div class="dim-rule" role="presentation"><span class="dim-label">TOLERANCES CHECKED</span></div>
+
+    <!-- ============ SHEET 05 · ALTERNATIVES ============ -->
+    <section class="sheet" id="compare" aria-labelledby="compare-title">
+      <p class="sheet-label"><span class="sheet-num">SHEET 05</span><span class="sheet-name">ALTERNATIVES</span></p>
+      <h2 id="compare-title">How it compares</h2>
+      <div class="compare-rows">
+        <div class="compare-row">
+          <p class="compare-name"><code>markdownify</code></p>
+          <p class="compare-note">Converts HTML to Markdown, but does no main-content extraction or metadata collection. <code>markmaton</code> does both in one step.</p>
+        </div>
+        <div class="compare-row">
+          <p class="compare-name"><code>readability-lxml</code></p>
+          <p class="compare-note">Distills main content as cleaned HTML — you still add a converter and a metadata layer. <code>markmaton</code> returns the full response in one call.</p>
+        </div>
+        <div class="compare-row">
+          <p class="compare-name"><code>trafilatura</code></p>
+          <p class="compare-note">A broader framework with its own fetching and discovery. <code>markmaton</code> is deliberately narrower: a parser core behind your fetcher.</p>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <footer class="foot">
+    <div class="foot-grid">
+      <div class="foot-brand">
+        <svg class="brand-mark" aria-hidden="true"><use href="#i-mark"/></svg>
+        <div>
+          <p class="foot-word">markmaton</p>
+          <p class="foot-tag">HTML in. Markdown out.</p>
+        </div>
+      </div>
+      <nav class="foot-links" aria-label="Footer links">
+        <a href="https://github.com/appautomaton/markmaton">GitHub</a>
+        <a href="https://pypi.org/project/markmaton/">PyPI</a>
+        <a href="https://github.com/appautomaton/markmaton/blob/main/CHANGELOG.md">Changelog</a>
+        <a href="https://github.com/appautomaton/markmaton/blob/main/LICENSE">MIT License</a>
+      </nav>
+      <div class="foot-meta">
+        <p class="stamp">SHEETS 01–05 · SCALE 1:1</p>
+        <p class="colophon">Set in Clash Display, General Sans &amp; Commit Mono.</p>
+      </div>
+    </div>
+  </footer>
+
+  <script src="main.js"></script>
+</body>
+</html>
