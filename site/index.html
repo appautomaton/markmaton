@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>markmaton — HTML in. Markdown out.</title>
   <meta name="description" content="markmaton is a lightweight HTML-to-Markdown parser core for agent workflows. Feed it page HTML — get back clean Markdown, metadata, links, images, and quality signals." />
-  <meta name="theme-color" content="#14304A" />
+  <meta name="theme-color" content="#0D0C0A" />
   <meta property="og:title" content="markmaton — HTML in. Markdown out." />
   <meta property="og:description" content="A lightweight parser core that strips page chrome and returns clean Markdown, metadata, and quality signals. Built for agent workflows." />
   <meta property="og:type" content="website" />
@@ -26,7 +26,7 @@
       <symbol id="i-mark" viewBox="0 0 32 32">
         <rect x="1" y="1" width="30" height="30" fill="none" stroke="currentColor" stroke-width="1.5"/>
         <path d="M13 9v14M19 9v14M9.5 13.5h13M9.5 18.5h13" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
-        <path class="mark-slash" d="M8 24L24 8" fill="none" stroke="#FF5A1F" stroke-width="2.2" stroke-linecap="round"/>
+        <path class="mark-slash" d="M8 24L24 8" fill="none" stroke-width="2.6" stroke-linecap="round"/>
       </symbol>
       <!-- Source control: three nodes on branching paths, dimension tick -->
       <symbol id="i-git" viewBox="0 0 24 24">
@@ -73,7 +73,7 @@
   </svg>
 
   <header class="head">
-    <a class="brand" href="https://appautomaton.github.io/markmaton/">
+    <a class="brand" href="https://appautomaton.renocrypt.com/markmaton/">
       <svg class="brand-mark" aria-hidden="true"><use href="#i-mark"/></svg>
       <span class="brand-word">markmaton</span>
     </a>
@@ -82,7 +82,7 @@
       <a href="https://pypi.org/project/markmaton/"><svg aria-hidden="true"><use href="#i-crate"/></svg><span>PyPI</span></a>
       <a href="https://github.com/appautomaton/markmaton/tree/main/docs"><svg aria-hidden="true"><use href="#i-sheet"/></svg><span>Docs</span></a>
     </nav>
-    <span class="stamp head-stamp">REV 0.1.8</span>
+    <span class="stamp" id="pypi-version" hidden></span>
   </header>
 
   <main>
@@ -167,11 +167,11 @@
       </figure>
     </section>
 
-    <div class="dim-rule" role="presentation"><span class="dim-label">100% DETERMINISTIC</span></div>
+    <div class="rule" role="presentation"></div>
 
     <!-- ============ SHEET 02 · PIPELINE ============ -->
     <section class="sheet" id="pipeline" aria-labelledby="pipeline-title">
-      <p class="sheet-label"><span class="sheet-num">SHEET 02</span><span class="sheet-name">PIPELINE</span></p>
+      <p class="sheet-label"><span class="sheet-name">PIPELINE</span></p>
       <h2 id="pipeline-title">The last mile of a web pipeline</h2>
       <p class="sheet-lede">You already have a way to visit pages. <code>markmaton</code> is the step that turns what they return into something an agent can use.</p>
       <div class="pipeline">
@@ -193,11 +193,11 @@
       <p class="callout"><span class="callout-mark" aria-hidden="true">◧</span> A parser, not a crawler — no network, no browser control, no LLM calls.</p>
     </section>
 
-    <div class="dim-rule" role="presentation"><span class="dim-label">ONE CALL · FULL SHEET</span></div>
+    <div class="rule" role="presentation"></div>
 
     <!-- ============ SHEET 03 · STRUCTURED OUTPUT ============ -->
     <section class="sheet" id="output" aria-labelledby="output-title">
-      <p class="sheet-label"><span class="sheet-num">SHEET 03</span><span class="sheet-name">STRUCTURED OUTPUT</span></p>
+      <p class="sheet-label"><span class="sheet-name">STRUCTURED OUTPUT</span></p>
       <h2 id="output-title">More than Markdown</h2>
       <p class="sheet-lede">JSON mode returns everything a pipeline needs to decide what to keep.</p>
       <div class="output-grid">
@@ -233,11 +233,11 @@
       </ul>
     </section>
 
-    <div class="dim-rule" role="presentation"><span class="dim-label">SCALE 1:1</span></div>
+    <div class="rule" role="presentation"></div>
 
     <!-- ============ SHEET 04 · INSTALL ============ -->
     <section class="sheet" id="install" aria-labelledby="install-title">
-      <p class="sheet-label"><span class="sheet-num">SHEET 04</span><span class="sheet-name">INSTALL</span></p>
+      <p class="sheet-label"><span class="sheet-name">INSTALL</span></p>
       <h2 id="install-title">Start parsing</h2>
       <div class="install-grid">
         <div class="install-block">
@@ -274,11 +274,11 @@
       <p class="install-note">Python CLI and API around a fast Go engine. <a href="https://github.com/appautomaton/markmaton#quickstart">Quickstart and Python API</a> in the README.</p>
     </section>
 
-    <div class="dim-rule" role="presentation"><span class="dim-label">TOLERANCES CHECKED</span></div>
+    <div class="rule" role="presentation"></div>
 
     <!-- ============ SHEET 05 · ALTERNATIVES ============ -->
     <section class="sheet" id="compare" aria-labelledby="compare-title">
-      <p class="sheet-label"><span class="sheet-num">SHEET 05</span><span class="sheet-name">ALTERNATIVES</span></p>
+      <p class="sheet-label"><span class="sheet-name">ALTERNATIVES</span></p>
       <h2 id="compare-title">How it compares</h2>
       <div class="compare-rows">
         <div class="compare-row">
@@ -314,7 +314,6 @@
         <a href="https://github.com/appautomaton/markmaton/blob/main/LICENSE">MIT License</a>
       </nav>
       <div class="foot-meta">
-        <p class="stamp">SHEETS 01–05 · SCALE 1:1</p>
         <p class="colophon">Set in Clash Display, General Sans &amp; Commit Mono.</p>
       </div>
     </div>

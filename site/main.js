@@ -54,6 +54,23 @@
 
   document.querySelector(".replay").addEventListener("click", playTheater);
 
+  /* ---------- live version chip (PyPI is the source of truth) ---------- */
+
+  const chip = document.getElementById("pypi-version");
+  if (chip) {
+    const controller = new AbortController();
+    setTimeout(() => controller.abort(), 4000);
+    fetch("https://pypi.org/pypi/markmaton/json", { signal: controller.signal })
+      .then((r) => (r.ok ? r.json() : Promise.reject(new Error("pypi"))))
+      .then((d) => {
+        chip.textContent = "v" + d.info.version;
+        chip.hidden = false;
+      })
+      .catch(() => {
+        /* no version shown — the page never lies about it */
+      });
+  }
+
   /* ---------- copy buttons ---------- */
 
   document.querySelectorAll(".copy").forEach((btn) => {

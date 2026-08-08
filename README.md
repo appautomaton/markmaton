@@ -113,7 +113,6 @@ uv tool install markmaton
 
 > [!TIP]
 > The installed package works through plain `pip`.
-> Local development uses `uv` with Python 3.12.
 
 ## Quickstart
 
@@ -199,10 +198,7 @@ For a manual end-to-end smoke:
 
 - [Local smoke flow](docs/local-smoke.md)
 
-The repo is pinned to:
-
-- Python `3.12` via [`.python-version`](.python-version)
-- a committed `uv.lock`
+Toolchain pins live in [`.python-version`](.python-version) and the committed `uv.lock`.
 
 > [!IMPORTANT]
 > Automated tests are unit-test-first. Live page visits and benchmarks are manual.
