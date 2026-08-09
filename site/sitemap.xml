@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- The location is the address that serves the page. appautomaton.github.io
+     permanently redirects here, and a sitemap listing a redirecting URL on
+     another host is treated as cross-submission.
+
+     A crawler only reads robots.txt at the host root, which the App Automaton
+     landing repository serves, so this file reaches search engines through the
+     Sitemap: line declared over there — not from anything in this directory. -->
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+  <url>
+    <loc>https://appautomaton.renocrypt.com/markmaton/</loc>
+    <lastmod>2026-08-08</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>1.0</priority>
+  </url>
+</urlset>
