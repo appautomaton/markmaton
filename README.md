@@ -170,7 +170,7 @@ JSON mode returns `markdown`, `html_clean`, `metadata`, `links`, `images`, and `
 
 ## Documentation
 
-- [Landing page](https://appautomaton.renocrypt.com/markmaton/)
+- [Landing page](https://appautomaton.com/markmaton/)
 - [Documentation index](docs/README.md)
 - [Usage guide](docs/usage.md)
 - [Packaging layout](docs/packaging-layout.md)

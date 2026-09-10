@@ -8,7 +8,7 @@
      Sitemap: line declared over there — not from anything in this directory. -->
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   <url>
-    <loc>https://appautomaton.renocrypt.com/markmaton/</loc>
+    <loc>https://appautomaton.com/markmaton/</loc>
     <lastmod>2026-08-08</lastmod>
     <changefreq>monthly</changefreq>
     <priority>1.0</priority>
